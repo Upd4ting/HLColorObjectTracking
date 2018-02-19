@@ -1,24 +1,19 @@
-LIB = $(HOME)/ServeurCHECKIN/CLib
-DOSSIER1 = $(HOME)/ServeurCHECKIN/Dossier1
+LIB = ../CLib/CLib
+APP = ../App
 
 GPP = g++ -lpthread -m64 -Wall -std=c++11 -I $(LIB)
 
 OBJ_LIBRARY = Input.o CSVFile.o PropFile.o Menu.o Logger.o Socket.o Server.o Client.o SocketUDP.o SocketTCP.o ServerTCP.o ServerUDP.o PTServer.o ClientUDP.o ClientTCP.o
 
-OBJ_SERVER = servermain.o json.o
-OBJ_CLIENT = clientmain.o json.o
+OBJ_SERVER = servermain.o
 
 .SILENT:
 
-all: Server Client
+all: Server
 
 Server: $(OBJ_LIBRARY) $(OBJ_SERVER)
-	echo 'Compilation du server'
+	echo 'Building server...'
 	$(GPP) -o Server $(OBJ_LIBRARY) $(OBJ_SERVER)
-
-Client: $(OBJ_LIBRARY) $(OBJ_CLIENT)
-	echo 'Compilation du client'
-	$(GPP) -o Client $(OBJ_LIBRARY) $(OBJ_CLIENT)
 
 # Compilation OBJ DE LA LIB
 Input.o: $(LIB)/Input.cpp $(LIB)/Input.h
@@ -66,14 +61,6 @@ ClientUDP.o: $(LIB)/ClientUDP.cpp $(LIB)/ClientUDP.h
 ClientTCP.o: $(LIB)/ClientTCP.cpp $(LIB)/ClientTCP.h
 	$(GPP) -c $(LIB)/ClientTCP.cpp
 
-
-json.o: $(DOSSIER1)/json.cpp
-	$(GPP) -c $(DOSSIER1)/json.cpp
-
-# Compilation OBJ CLIENT
-clientmain.o: $(DOSSIER1)/clientmain.cpp
-	$(GPP) -c $(DOSSIER1)/clientmain.cpp
-
 # Compilation OBJ SERVER
-servermain.o: $(DOSSIER1)/servermain.cpp
-	$(GPP) -c $(DOSSIER1)/servermain.cpp
+servermain.o: $(APP)/servermain.cpp
+	$(GPP) -c $(APP)/servermain.cpp
