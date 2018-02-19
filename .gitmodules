@@ -1,0 +1,3 @@
+[submodule "Server/CLib/CLib"]
+	path = Server/CLib/CLib
+	url = https://github.com/Upd4ting/CLib.git
