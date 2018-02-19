@@ -1,3 +1,6 @@
 [submodule "Server/CLib/CLib"]
 	path = Server/CLib/CLib
 	url = https://github.com/Upd4ting/CLib.git
+[submodule "UnityProject/Assets/lib/HololensTemplate"]
+	path = UnityProject/Assets/lib/HololensTemplate
+	url = https://github.com/Upd4ting/HololensTemplate.git

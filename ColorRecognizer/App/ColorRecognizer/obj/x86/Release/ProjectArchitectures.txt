@@ -1,1 +1,0 @@
-D:\Documents\workspace-technifutur\Propre\ColorRecognizer\App\ColorRecognizer\ColorRecognizer.csproj;x86
