@@ -12,6 +12,13 @@ using namespace std;
 
 typedef unsigned char u8;
 
+typedef struct Request {
+	int minH;
+	int maxH;
+	int posX;
+	int posY;
+} REQUEST;
+
 ServerUDP *server = NULL;
 
 Logger *logger = NULL;
@@ -64,7 +71,7 @@ void writeInt(char *buffer, int start, int n)
 
 void handlerSigint(int sig)
 {
-	logger->write("Fermeture du serveur...");
+	logger->write("Closing the server...");
 
 	if (server)
 		server->stop();
@@ -87,61 +94,91 @@ int main(int argc, char **argv)
 
 	if (server == NULL)
 	{
-		logger->write("Erreur création de la classe server !");
+		logger->write("Error when creating the server!");
 		return 1;
 	}
 
 	// PROTOCOL
-	// INT -> minH
-	// INT -> maxH
-	// INT -> Taille de l'image
+	// INT -> Number of request
+	// 	INT -> minH
+	// 	INT -> maxH
+	//  ... 
+	// INT -> Size of the picture
 	// BYTES -> IMAGE
 
 	server->getSocket()->setMessageListener([&](Socket *ss) {
 		SocketUDP *socket = (SocketUDP*) ss;
 		char* packet = socket->getPacket();
 
-		int minH = getInt(packet, 0);
-		int maxH = getInt(packet, 4);
-		int size = getInt(packet, 8);
+		int numberRequest = getInt(packet, 0);
+		std::vector<REQUEST> requests;
+
+		int curOffset = 4;
+
+		for (int i = 0; i < numberRequest; i++)
+		{
+			int minH = getInt(packet, curOffset);
+			int maxH = getInt(packet, curOffset + 4);
+			curOffset += 8;
+
+			REQUEST r;
+			r.minH = minH;
+			r.maxH = maxH;
+			r.posX = -1;
+			r.posY = -1;
+
+			requests.push_back(r);
+		}
+
+		int size = getInt(packet, curOffset);
+		curOffset += 4;
 
 		int n = size / 2 - 1;
 
-		int posX = 0, posY = 0;
-
-		// Traitement de l'image
+		// Image processing
 		for (int i = 0; i < size; i += 4)
 		{
-            char b = packet[12 + i];
-            char g = packet[12 + i + 1];
-            char r = packet[12 + i + 2];
+            char b = packet[curOffset + i];
+            char g = packet[curOffset + i + 1];
+            char r = packet[curOffset + i + 2];
 
             float h, s, v;
 
             RGBtoHSV((float)r, (float)g, (float)b, h, s, v);
 
-            if (h >= minH && h <= maxH)
+            for (std::vector<REQUEST>::iterator it = requests.begin(); it != requests.end(); it++)
             {
-            	posY = i / n;
-            	posX = i % n;
-            	break;
+            	REQUEST r = *it;
+            	if (h >= r.minH && h <= r.maxH)
+            	{
+            		r.posY = i / n;
+            		r.posX = i % n;
+            	}
             }
 		}
 
 		// PROTOCOL ANSWER
 		// INT POSX
 		// INT POSY
-		char buffer[8];
-		writeInt(buffer, 0, posX);
-		writeInt(buffer, 4, posY);
+		// For each request
+		char buffer[numberRequest * 8];
+		int i = 0;
 
-		socket->send((void*) buffer, 8);
+		for (std::vector<REQUEST>::iterator it = requests.begin(); it != requests.end(); it++)
+		{
+			REQUEST r = *it;
+
+			writeInt(buffer, i++ * 4, r.posX);
+			writeInt(buffer, i++ * 4, r.posY);
+		}
+
+		socket->send((void*) buffer, numberRequest * 8);
 	});
 
-	logger->write("Start du serveur...");
+	logger->write("Starting the server...");
 	server->start();
 
-	logger->write("Appuyer sur une touche pour fermer le serveur !");
+	logger->write("Type something to close the server or CTRL + C");
 
 	fflush(stdin);
 	std::cin.get();
