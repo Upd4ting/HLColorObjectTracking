@@ -1,50 +1,43 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
+
 using HoloLensCameraStream;
+
 using HoloToolkit.Unity;
 
 using UnityEngine;
 using UnityEngine.XR.WSA;
 
 using Application = UnityEngine.WSA.Application;
+using Resolution = HoloLensCameraStream.Resolution;
 
 public class TrackerManager : Singleton<TrackerManager> {
-
-    [Header("Server settings")]
-    [Tooltip("The server IP")]
-    [SerializeField] private string serverIp;
-    [Tooltip("The server port")]
-    [SerializeField] private int serverPort;
-
-    private List<ObjectTracker> trackers = new List<ObjectTracker>();
+    // Variable for Server
+    private UdpClient _client;
 
     // Variable for Camera
     private byte[]     _latestImageBytes;
-    private HoloLensCameraStream.Resolution _resolution;
+    private Resolution _resolution;
 
-    private IntPtr       _spatialCoordinateSystemPtr;
-    private VideoCapture _videoCapture;
+    private IntPtr _spatialCoordinateSystemPtr;
+
+    private readonly List<ObjectTracker> _trackers = new List<ObjectTracker>();
+    private          VideoCapture        _videoCapture;
+
+    [Header("Server settings")] [Tooltip("The server IP")] [SerializeField]
+    private string serverIp;
+
+    [Header("Server settings")] [Tooltip("The server port")] [SerializeField]
+    private int serverPort;
 
     public void registerTracker(ObjectTracker tracker) {
-        trackers.Add(tracker);
+        _trackers.Add(tracker);
     }
 
-    private void Start()
-    {
-        //Fetch a pointer to Unity's spatial coordinate system if you need pixel mapping
-        _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
-
-        //Call this in Start() to ensure that the CameraStreamHelper is already "Awake".
-        CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
-
-        //TODO Start UDP server
-    }
-
-    protected override void OnDestroy()
-    {
-        if (_videoCapture != null)
-        {
+    protected override void OnDestroy() {
+        if (_videoCapture != null) {
             _videoCapture.FrameSampleAcquired -= OnFrameSampleAcquired;
             _videoCapture.Dispose();
         }
@@ -52,10 +45,22 @@ public class TrackerManager : Singleton<TrackerManager> {
         base.OnDestroy();
     }
 
-    private void OnVideoCaptureCreated(VideoCapture videoCapture)
-    {
-        if (videoCapture == null)
-        {
+    private void Start() {
+        try {
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(serverIp), serverPort);
+
+            _client.Connect(ep);
+
+            _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
+
+            CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
+        } catch (Exception e) {
+            Debug.LogError("Couldn't connect to the server! Exception: " + e.Message);
+        }
+    }
+
+    private void OnVideoCaptureCreated(VideoCapture videoCapture) {
+        if (videoCapture == null) {
             Debug.LogError("Did not find a video capture object. You may not be using the HoloLens.");
             return;
         }
@@ -71,19 +76,17 @@ public class TrackerManager : Singleton<TrackerManager> {
 
         CameraParameters cameraParams = new CameraParameters();
         cameraParams.cameraResolutionHeight = _resolution.height;
-        cameraParams.cameraResolutionWidth = _resolution.width;
-        cameraParams.frameRate = Mathf.RoundToInt(frameRate);
-        cameraParams.pixelFormat = CapturePixelFormat.BGRA32;
-        cameraParams.rotateImage180Degrees = false;
-        cameraParams.enableHolograms = false;
+        cameraParams.cameraResolutionWidth  = _resolution.width;
+        cameraParams.frameRate              = Mathf.RoundToInt(frameRate);
+        cameraParams.pixelFormat            = CapturePixelFormat.BGRA32;
+        cameraParams.rotateImage180Degrees  = false;
+        cameraParams.enableHolograms        = false;
 
         videoCapture.StartVideoModeAsync(cameraParams, OnVideoModeStarted);
     }
 
-    private void OnVideoModeStarted(VideoCaptureResult result)
-    {
-        if (result.success == false)
-        {
+    private void OnVideoModeStarted(VideoCaptureResult result) {
+        if (result.success == false) {
             Debug.LogWarning("Could not start video mode.");
             return;
         }
@@ -91,25 +94,22 @@ public class TrackerManager : Singleton<TrackerManager> {
         Debug.Log("Video capture started.");
     }
 
-    private void OnFrameSampleAcquired(VideoCaptureSample sample)
-    {
+    private void OnFrameSampleAcquired(VideoCaptureSample sample) {
         if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength) _latestImageBytes = new byte[sample.dataLength];
         sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
 
         float[] cameraToWorldMatrixAsFloat;
         float[] projectionMatrixAsFloat;
-        if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false)
-        {
+        if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false) {
             Debug.Log("Failed to get camera to world or projection matrix");
             return;
         }
 
         Matrix4x4 cameraToWorldMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(cameraToWorldMatrixAsFloat);
-        Matrix4x4 projectionMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
+        Matrix4x4 projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
 
-        
-        Application.InvokeOnAppThread(() =>
-        {
+
+        Application.InvokeOnAppThread(() => {
             //TODO REQUEST UDP
         }, false);
     }
