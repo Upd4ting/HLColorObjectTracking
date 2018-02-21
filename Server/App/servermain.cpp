@@ -98,6 +98,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	((SocketUDP*)server->getSocket())->setBufsize(1048576);
+
 	// PROTOCOL
 	// INT -> Number of request
 	// 	INT -> minH
@@ -158,11 +160,14 @@ int main(int argc, char **argv)
 		}
 
 		// PROTOCOL ANSWER
+		// Num request
 		// INT POSX
 		// INT POSY
 		// For each request
-		char buffer[numberRequest * 8];
+		char buffer[numberRequest * 8 + 4];
 		int i = 0;
+
+		writeInt(buffer, i++, numberRequest);
 
 		for (std::vector<REQUEST>::iterator it = requests.begin(); it != requests.end(); it++)
 		{

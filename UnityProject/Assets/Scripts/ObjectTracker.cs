@@ -1,17 +1,21 @@
 ﻿using UnityEngine;
 
 public class ObjectTracker : MonoBehaviour {
-    [Header("Tracker settings")] [Tooltip("Tracking enabled or not")] [SerializeField]
-    private bool trackingEnabled;
-
     [Header("Tracker settings")] [Tooltip("The maximum H required (HSV color format)")] [SerializeField]
     private int maxH;
 
-    [Header("Tracker settings")] [Tooltip("The minimum H required (HSV color format)")] [SerializeField]
+    [Tooltip("The minimum H required (HSV color format)")] [SerializeField]
     private int minH;
 
-    [Header("Tracker settings")] [Tooltip("The Tracker manager to use")] [SerializeField]
+    [Tooltip("The Tracker manager to use")] [SerializeField]
     private TrackerManager tManager;
+
+    [Tooltip("Tracking enabled or not")] [SerializeField]
+    private bool trackingEnabled;
+
+    public int MaxH { get { return maxH; } set { maxH = value; } }
+
+    public int MinH { get { return minH; } set { minH = value; } }
 
     private void Start() {
         if (trackingEnabled) tManager.registerTracker(this);

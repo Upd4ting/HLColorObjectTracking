@@ -16,7 +16,7 @@ public class Request {
         ORequests = new List<ObjectRequest>();
     }
 
-    public byte[] getByteArray() {
+    public byte[] GetByteArray() {
         MemoryStream ms = new MemoryStream();
         BinaryWriter writer = new BinaryWriter(ms);
 

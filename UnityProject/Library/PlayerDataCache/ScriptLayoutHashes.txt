@@ -115,7 +115,6 @@ dfbbd0f200dcccb2189b8a6462d69d7c Assembly-CSharp.dll:HoloToolkit.Unity.UX.LineUn
 06b78688ddd32fd8e636842d5ee81e27 Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.FileSurfaceObserver
 5dcb61e94186ec41cb847d8459ade72c Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.XboxControllerHandlerBase
 8644983781391a1a0c05940eaa565fef Assembly-CSharp.dll:HoloToolkit.Unity.SpatialMapping.RemoteMeshTarget
-05524b8f659e7bfe5756d1335fec24ba Assembly-CSharp.dll:.ColorFinder
 064f0a952de99350d72c261f966c7de6 Assembly-CSharp.dll:HoloToolkit.Sharing.Utilities.AutoJoinSessionAndRoom
 57de9d606b17762955c771ca8e5c67e4 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.ObjectCursor
 d4463422b1b111b746cad022acbdb5b4 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.GazeManager
@@ -211,6 +210,7 @@ d2a2bd333db22f480a8589e167314ecc Vuforia.UnityExtensions.dll:Vuforia.UserDefined
 3d1b89310e77c34bc0c8d7132231345c Vuforia.UnityExtensions.dll:Vuforia.WireframeBehaviour
 05524b8f659e7bfe5756d1335fec24ba Vuforia.UnityExtensions.dll:Vuforia.WireframeTrackableEventHandler
 15bea26698002c6c4a3087131232ce5c Vuforia.UnityExtensions.dll:Vuforia.WordBehaviour
+efe651ae1cf30f2ea76ed1faddaeb382 Assembly-CSharp.dll:.ObjectTracker
 2e142e3515970b98b20098605147f2f1 Assembly-CSharp.dll:HoloToolkit.Unity.Buttons.ButtonSounds
 3f16ec9c260615d45770eac30ece2ad5 Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.SpeechInputSource
 055f44f3f660cf5de32a98172a9b8825 Assembly-CSharp.dll:HoloToolkit.Unity.FpsDisplay
@@ -372,6 +372,7 @@ d5caa5c507202d113c0e7f0a26ca4bba Assembly-CSharp.dll:HoloToolkit.Unity.AudioOccl
 f1dddc522eb4451a473352e2116e6cff Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.GamePadHandlerBase
 818cc923a72dcfe3a52a0eb281828393 Assembly-CSharp.dll:HoloToolkit.Unity.HeadsUpDirectionIndicator
 49febca92ce435f92504a89f23fd84ca Assembly-CSharp.dll:HoloToolkit.UI.Keyboard.KeyboardKeyFunc
+cd3e2be679d9d4f8e6f6e8ba2a3d48c7 Assembly-CSharp.dll:.TrackerManager
 05524b8f659e7bfe5756d1335fec24ba Assembly-CSharp.dll:HoloToolkit.Unity.UsabilityScaler
 77fc19578ec6b3c5048a9606add67fc9 Assembly-CSharp.dll:HoloToolkit.Unity.UX.LineStripMesh
 1c956525f3bbc043ebd0ce75f92a03c6 Assembly-CSharp.dll:HoloToolkit.Unity.SharingWithUNET.NetworkDiscoveryWithAnchors
