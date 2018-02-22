@@ -7,7 +7,7 @@
 # Default behavior is to never overwrite files
 ColorRecognizer.sln: 0CD13BD0E988E52823D9AD73201704CB
 ColorRecognizer\App.cs: EA9993EBC8E6285387C94F648AB2075C
-ColorRecognizer\ColorRecognizer.csproj: 1B9E721354AA825EC2B4784B51BE1A8F
+ColorRecognizer\ColorRecognizer.csproj: 3561D73291A98D121DB4ECBFC5929136
 ColorRecognizer\ColorRecognizer.csproj.user: modified
 ColorRecognizer\Package.appxmanifest: 86F9D320F7B50233E13C7E2A91B26D22
 ColorRecognizer\project.json: 1D02BC64BAC0D041019673A1C4C51737

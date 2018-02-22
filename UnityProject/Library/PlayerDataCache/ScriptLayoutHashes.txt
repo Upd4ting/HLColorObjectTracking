@@ -372,7 +372,7 @@ d5caa5c507202d113c0e7f0a26ca4bba Assembly-CSharp.dll:HoloToolkit.Unity.AudioOccl
 f1dddc522eb4451a473352e2116e6cff Assembly-CSharp.dll:HoloToolkit.Unity.InputModule.GamePadHandlerBase
 818cc923a72dcfe3a52a0eb281828393 Assembly-CSharp.dll:HoloToolkit.Unity.HeadsUpDirectionIndicator
 49febca92ce435f92504a89f23fd84ca Assembly-CSharp.dll:HoloToolkit.UI.Keyboard.KeyboardKeyFunc
-cd3e2be679d9d4f8e6f6e8ba2a3d48c7 Assembly-CSharp.dll:.TrackerManager
+12dc22c76218c000ed1b5ccf6703f073 Assembly-CSharp.dll:.TrackerManager
 05524b8f659e7bfe5756d1335fec24ba Assembly-CSharp.dll:HoloToolkit.Unity.UsabilityScaler
 77fc19578ec6b3c5048a9606add67fc9 Assembly-CSharp.dll:HoloToolkit.Unity.UX.LineStripMesh
 1c956525f3bbc043ebd0ce75f92a03c6 Assembly-CSharp.dll:HoloToolkit.Unity.SharingWithUNET.NetworkDiscoveryWithAnchors

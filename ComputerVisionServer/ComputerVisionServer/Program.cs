@@ -12,7 +12,6 @@ namespace ComputerVisionServer {
         private static void Main(string[] args) {
             EventBasedNetListener listener = new EventBasedNetListener();
             NetManager            server   = new NetManager(listener, 64, "ConnectionKey");
-            server.MergeEnabled = true;
             server.Start(32020);
 
             // PROTOCOL
@@ -43,7 +42,7 @@ namespace ComputerVisionServer {
 
                 int n = size / 2 - 1;
 
-                for (int i = 0; i < size; i+=4) {
+                for (int i = 0; i < size; i += 4) {
                     byte b = pictures[i];
                     byte g = pictures[i + 1];
                     byte r = pictures[i + 2];
@@ -78,6 +77,8 @@ namespace ComputerVisionServer {
 
                 peer.Send(writer, SendOptions.ReliableOrdered);
             };
+
+            Console.WriteLine("Server started!");
 
             while (!Console.KeyAvailable) {
                 server.PollEvents();
