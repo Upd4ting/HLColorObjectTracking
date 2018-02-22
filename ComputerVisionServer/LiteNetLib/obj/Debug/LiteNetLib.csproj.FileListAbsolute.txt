@@ -1,0 +1,6 @@
+D:\Documents\workspace-technifutur\ColorObjectTracking\ComputerVisionServer\LiteNetLib\bin\Debug\LiteNetLib.dll
+D:\Documents\workspace-technifutur\ColorObjectTracking\ComputerVisionServer\LiteNetLib\bin\Debug\LiteNetLib.pdb
+D:\Documents\workspace-technifutur\ColorObjectTracking\ComputerVisionServer\LiteNetLib\obj\Debug\LiteNetLib.csprojResolveAssemblyReference.cache
+D:\Documents\workspace-technifutur\ColorObjectTracking\ComputerVisionServer\LiteNetLib\obj\Debug\LiteNetLib.csproj.CoreCompileInputs.cache
+D:\Documents\workspace-technifutur\ColorObjectTracking\ComputerVisionServer\LiteNetLib\obj\Debug\LiteNetLib.dll
+D:\Documents\workspace-technifutur\ColorObjectTracking\ComputerVisionServer\LiteNetLib\obj\Debug\LiteNetLib.pdb
