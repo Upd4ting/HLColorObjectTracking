@@ -1,79 +1,112 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 using HoloLensCameraStream;
-
-using LiteNetLib;
 
 using UnityEngine;
 using UnityEngine.XR.WSA;
 
 using Resolution = HoloLensCameraStream.Resolution;
 
+#if !UNITY_EDITOR
+using Windows.Networking.Sockets;
+using Windows.Networking;
+using System.Threading.Tasks;
+using Windows.Storage.Streams;
+#endif
+
 public class TrackerManager : MonoBehaviour {
     private readonly List<ObjectTracker> _trackers = new List<ObjectTracker>();
-    private          Matrix4x4           _cameraToWorldMatrix;
 
     // Variable for Camera
+    private Matrix4x4 _cameraToWorldMatrix = Matrix4x4.zero;
+    private Matrix4x4 _projectionMatrix = Matrix4x4.zero;
     private byte[]    _latestImageBytes;
-    private Matrix4x4 _projectionMatrix;
 
     private Resolution _resolution;
 
     // Variable for Server
-    private NetPeer _serverPeer;
+    private bool _running;
+#if !UNITY_EDITOR
+    private StreamSocket _socket;
+#endif
 
     private IntPtr       _spatialCoordinateSystemPtr;
-    private bool         _succeed;
     private VideoCapture _videoCapture;
-
-    [Tooltip("The connection key")] [SerializeField]
-    private readonly string key = "ConnectionKey";
 
     [Header("Server settings")] [Tooltip("The server IP")] [SerializeField]
     private string serverIp;
 
     [Tooltip("The server port")] [SerializeField]
-    private int serverPort;
+    private string serverPort;
 
     public void registerTracker(ObjectTracker tracker) {
         _trackers.Add(tracker);
     }
 
-    private void OnDestroy() {
-        if (_videoCapture != null) {
-            _videoCapture.FrameSampleAcquired -= OnFrameSampleAcquired;
-            _videoCapture.Dispose();
-        }
-    }
-
+#if !UNITY_EDITOR
+    async
+#endif
     private void Awake() {
         try {
-            EventBasedNetListener listener = new EventBasedNetListener();
-            NetManager            client   = new NetManager(listener, key);
-            client.Start();
-            _serverPeer = client.Connect(serverIp, serverPort);
-            listener.NetworkReceiveEvent += (fromPeer, dataReader) => {
-                int posx = dataReader.GetInt();
-                int posy = dataReader.GetInt();
+#if !UNITY_EDITOR
+            _socket = new StreamSocket();
+            _socket.Control.NoDelay = true;
+            _socket.Control.QualityOfService = SocketQualityOfService.LowLatency;
 
-                Debug.Log("POSX " + posx + " POSY " + posy);
-            };
-
-            _succeed = true;
+            await _socket.ConnectAsync(new HostName(serverIp), serverPort);
+#endif
+            Debug.Log("Connected");
+            _running = true;
+            OnStart(); // Because our async Awake will be finished after the real Start method of Unity
         } catch (Exception e) {
             Debug.LogError("Couldn't connect to the server! Exception: " + e.Message);
-            _succeed = false;
+            _running = false;
         }
     }
 
-    private void Start() {
-        if (!_succeed)
+    private void OnStart() {
+        if (!_running)
             return;
 
         _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
 
         CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
+
+    #if !UNITY_EDITOR
+        Task.Run(() => ReceiveData());
+    #endif
+    }
+
+    private void OnDestroy() {
+        Destroy();
+    }
+
+    private void OnApplicationQuit() {
+        Destroy();
+    }
+
+#if !UNITY_EDITOR
+    async
+#endif
+    private void Destroy() {
+        if (_videoCapture != null)
+        {
+            _videoCapture.FrameSampleAcquired -= OnFrameSampleAcquired;
+            _videoCapture.Dispose();
+        }
+
+        if (_running)
+        {
+        #if !UNITY_EDITOR //TODO CHANGE SEND END_OF_CONNECTION HAHHA
+            await _socket.CancelIOAsync();
+            _socket.Dispose();
+            _socket = null;
+            _running = false;
+            Debug.Log("Closed");
+        #endif
+        }
     }
 
     private void OnVideoCaptureCreated(VideoCapture videoCapture) {
@@ -89,6 +122,7 @@ public class TrackerManager : MonoBehaviour {
 
         _resolution = CameraStreamHelper.Instance.GetLowestResolution();
         float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
+
         videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 
         CameraParameters cameraParams = new CameraParameters();
@@ -111,12 +145,14 @@ public class TrackerManager : MonoBehaviour {
         Debug.Log("Video capture started.");
     }
 
+#if !UNITY_EDITOR
+    async
+#endif
     private void OnFrameSampleAcquired(VideoCaptureSample sample) {
         if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength) _latestImageBytes = new byte[sample.dataLength];
         sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
 
-
-        if (_projectionMatrix == null || _cameraToWorldMatrix == null) {
+        if (_projectionMatrix == Matrix4x4.zero || _cameraToWorldMatrix == Matrix4x4.zero) {
             float[] cameraToWorldMatrixAsFloat;
             float[] projectionMatrixAsFloat;
             if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false) {
@@ -128,17 +164,66 @@ public class TrackerManager : MonoBehaviour {
             _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
         }
 
-        Request request = new Request(_latestImageBytes);
+        try {
+        //    MemoryStream ms = new MemoryStream();
+        //    BinaryWriter bw = new BinaryWriter(ms);
+        //    bw.Write(_trackers.Count);
 
-        foreach (ObjectTracker ot in _trackers) {
-            Request.ObjectRequest or = new Request.ObjectRequest();
-            or.minH = ot.MinH;
-            or.maxH = ot.MaxH;
-            request.ORequests.Add(or);
+        //    foreach (ObjectTracker ot in _trackers) {
+        //        bw.Write(ot.MinH);
+        //        bw.Write(ot.MaxH);
+        //    }
+
+        //    bw.Write(_latestImageBytes.Length);
+        //    bw.Write(_latestImageBytes);
+
+        //    byte[] toSend = ms.ToArray();
+
+        //#if !UNITY_EDITOR
+        //    using (DataWriter writer = new DataWriter(_socket.OutputStream)) {
+        //        writer.WriteInt32(toSend.Length);
+        //        writer.WriteBytes(toSend);
+
+        //        await writer.StoreAsync();
+
+        //        writer.DetachStream();
+        //        writer.Dispose();
+        //    }
+        //#endif
+        }
+        catch (Exception e) {
+            Debug.Log("Error: " + e.Message);
         }
 
-        byte[] toSend = request.GetByteArray();
+        Debug.Log("Sending request");
+    }
 
-        _serverPeer.Send(toSend, SendOptions.ReliableOrdered);
+#if !UNITY_EDITOR
+    private async void ReceiveData() {
+        using (DataReader reader = new DataReader(_socket.InputStream)) {
+
+            while (_running) {
+                reader.InputStreamOptions = InputStreamOptions.Partial;
+
+                await reader.LoadAsync(reader.UnconsumedBufferLength);
+
+                int number = reader.ReadInt32();
+                
+                for (int i = 0; i < number; i++) {
+                    int posx = reader.ReadInt32();
+                    int posy = reader.ReadInt32();
+
+                    ReceivePosResult(i, posx, posy);
+                }
+            }
+            
+            reader.DetachStream();
+            reader.Dispose();
+        }
+    }
+#endif
+
+    private void ReceivePosResult(int index, int posx, int posy) {
+        Debug.Log("Index " + index + " POSX " + posx + " POSY " + posy);
     }
 }

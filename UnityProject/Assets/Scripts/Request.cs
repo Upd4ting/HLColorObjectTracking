@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
-public class Request {
+public class Request : IDisposable {
     public byte[] Image { get; set; }
 
     public List<ObjectRequest> ORequests { get; set; }
@@ -36,5 +37,11 @@ public class Request {
         writer.Write(Image);
 
         return ms.ToArray();
+    }
+
+    public void Dispose() {
+        Image = null;
+        ORequests.Clear();
+        ORequests = null;
     }
 }

@@ -7,7 +7,7 @@
 # Default behavior is to never overwrite files
 ColorRecognizer.sln: 0CD13BD0E988E52823D9AD73201704CB
 ColorRecognizer\App.cs: EA9993EBC8E6285387C94F648AB2075C
-ColorRecognizer\ColorRecognizer.csproj: 3561D73291A98D121DB4ECBFC5929136
+ColorRecognizer\ColorRecognizer.csproj: 944F1F3066225A753C181D848B140A2A
 ColorRecognizer\ColorRecognizer.csproj.user: modified
 ColorRecognizer\Package.appxmanifest: 86F9D320F7B50233E13C7E2A91B26D22
 ColorRecognizer\project.json: 1D02BC64BAC0D041019673A1C4C51737
@@ -26,3 +26,4 @@ ColorRecognizer\bin\x86\Debug\AppX\Assets\Wide310x150Logo.scale-200.png: C96846A
 ColorRecognizer\bin\x86\Debug\AppX\Properties\Default.rd.xml: 72EB282657164E79A1C42F6240984826
 ColorRecognizer\obj\x86\Debug\ColorRecognizer.csproj.CopyComplete: D41D8CD98F00B204E9800998ECF8427E
 ColorRecognizer\Properties\Default.rd.xml: 72EB282657164E79A1C42F6240984826
+GeneratedProjects\UWP\Assembly-CSharp\project.json: 1D02BC64BAC0D041019673A1C4C51737

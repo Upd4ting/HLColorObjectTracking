@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <Machine>DESKTOP-IL2Q2MN</Machine>
+    <Machine>UPD4TING-PC</Machine>
     <WindowsUser>Upd4ting</WindowsUser>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetOsVersion>10.0</TargetOsVersion>
@@ -458,6 +458,12 @@
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\Assembly-CSharp.dll">
+      <PackagePath>Assembly-CSharp.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.TilemapModule.dll">
+      <PackagePath>UnityEngine.TilemapModule.dll</PackagePath>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.TextRenderingModule.dll">
       <PackagePath>UnityEngine.TextRenderingModule.dll</PackagePath>
     </AppxPackagedFile>
@@ -467,134 +473,128 @@
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.TerrainModule.dll">
       <PackagePath>UnityEngine.TerrainModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.TilemapModule.dll">
-      <PackagePath>UnityEngine.TilemapModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UIElementsModule.dll">
-      <PackagePath>UnityEngine.UIElementsModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ScreenCaptureModule.dll">
+      <PackagePath>UnityEngine.ScreenCaptureModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.SharedInternalsModule.dll">
       <PackagePath>UnityEngine.SharedInternalsModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ScreenCaptureModule.dll">
-      <PackagePath>UnityEngine.ScreenCaptureModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.PhysicsModule.dll">
-      <PackagePath>UnityEngine.PhysicsModule.dll</PackagePath>
-    </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.SpriteMaskModule.dll">
       <PackagePath>UnityEngine.SpriteMaskModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.StyleSheetsModule.dll">
-      <PackagePath>UnityEngine.StyleSheetsModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.SpriteShapeModule.dll">
       <PackagePath>UnityEngine.SpriteShapeModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.VideoModule.dll">
-      <PackagePath>UnityEngine.VideoModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.StyleSheetsModule.dll">
+      <PackagePath>UnityEngine.StyleSheetsModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.VehiclesModule.dll">
-      <PackagePath>UnityEngine.VehiclesModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UIElementsModule.dll">
+      <PackagePath>UnityEngine.UIElementsModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityWebRequestWWWModule.dll">
       <PackagePath>UnityEngine.UnityWebRequestWWWModule.dll</PackagePath>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.VehiclesModule.dll">
+      <PackagePath>UnityEngine.VehiclesModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.VideoModule.dll">
+      <PackagePath>UnityEngine.VideoModule.dll</PackagePath>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.VRModule.dll">
       <PackagePath>UnityEngine.VRModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.WindModule.dll">
-      <PackagePath>UnityEngine.WindModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.WebModule.dll">
       <PackagePath>UnityEngine.WebModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityAnalyticsModule.dll">
-      <PackagePath>UnityEngine.UnityAnalyticsModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UNETModule.dll">
-      <PackagePath>UnityEngine.UNETModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UIModule.dll">
-      <PackagePath>UnityEngine.UIModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityConnectModule.dll">
-      <PackagePath>UnityEngine.UnityConnectModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.WindModule.dll">
+      <PackagePath>UnityEngine.WindModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityWebRequestTextureModule.dll">
       <PackagePath>UnityEngine.UnityWebRequestTextureModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityWebRequestModule.dll">
-      <PackagePath>UnityEngine.UnityWebRequestModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UIModule.dll">
+      <PackagePath>UnityEngine.UIModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UNETModule.dll">
+      <PackagePath>UnityEngine.UNETModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityAnalyticsModule.dll">
+      <PackagePath>UnityEngine.UnityAnalyticsModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityConnectModule.dll">
+      <PackagePath>UnityEngine.UnityConnectModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityWebRequestAudioModule.dll">
       <PackagePath>UnityEngine.UnityWebRequestAudioModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AssetBundleModule.dll">
-      <PackagePath>UnityEngine.AssetBundleModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.UnityWebRequestModule.dll">
+      <PackagePath>UnityEngine.UnityWebRequestModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.PhysicsModule.dll">
+      <PackagePath>UnityEngine.PhysicsModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ARModule.dll">
       <PackagePath>UnityEngine.ARModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AnimationModule.dll">
-      <PackagePath>UnityEngine.AnimationModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AssetBundleModule.dll">
+      <PackagePath>UnityEngine.AssetBundleModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AudioModule.dll">
       <PackagePath>UnityEngine.AudioModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.CrashReportingModule.dll">
-      <PackagePath>UnityEngine.CrashReportingModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ClothModule.dll">
+      <PackagePath>UnityEngine.ClothModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.CoreModule.dll">
       <PackagePath>UnityEngine.CoreModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ClothModule.dll">
-      <PackagePath>UnityEngine.ClothModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.CrashReportingModule.dll">
+      <PackagePath>UnityEngine.CrashReportingModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\Assembly-CSharp.dll">
-      <PackagePath>Assembly-CSharp.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AIModule.dll">
-      <PackagePath>UnityEngine.AIModule.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AnimationModule.dll">
+      <PackagePath>UnityEngine.AnimationModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AccessibilityModule.dll">
       <PackagePath>UnityEngine.AccessibilityModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.JSONSerializeModule.dll">
-      <PackagePath>UnityEngine.JSONSerializeModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.InputModule.dll">
-      <PackagePath>UnityEngine.InputModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ParticlesLegacyModule.dll">
-      <PackagePath>UnityEngine.ParticlesLegacyModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.Physics2DModule.dll">
-      <PackagePath>UnityEngine.Physics2DModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.PerformanceReportingModule.dll">
-      <PackagePath>UnityEngine.PerformanceReportingModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ParticleSystemModule.dll">
-      <PackagePath>UnityEngine.ParticleSystemModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.GameCenterModule.dll">
-      <PackagePath>UnityEngine.GameCenterModule.dll</PackagePath>
-    </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.dll">
-      <PackagePath>UnityEngine.dll</PackagePath>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.AIModule.dll">
+      <PackagePath>UnityEngine.AIModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.DirectorModule.dll">
       <PackagePath>UnityEngine.DirectorModule.dll</PackagePath>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.JSONSerializeModule.dll">
+      <PackagePath>UnityEngine.JSONSerializeModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ParticlesLegacyModule.dll">
+      <PackagePath>UnityEngine.ParticlesLegacyModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ParticleSystemModule.dll">
+      <PackagePath>UnityEngine.ParticleSystemModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.PerformanceReportingModule.dll">
+      <PackagePath>UnityEngine.PerformanceReportingModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.Physics2DModule.dll">
+      <PackagePath>UnityEngine.Physics2DModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.InputModule.dll">
+      <PackagePath>UnityEngine.InputModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.dll">
+      <PackagePath>UnityEngine.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.GameCenterModule.dll">
+      <PackagePath>UnityEngine.GameCenterModule.dll</PackagePath>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.GridModule.dll">
       <PackagePath>UnityEngine.GridModule.dll</PackagePath>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.IMGUIModule.dll">
-      <PackagePath>UnityEngine.IMGUIModule.dll</PackagePath>
-    </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.ImageConversionModule.dll">
       <PackagePath>UnityEngine.ImageConversionModule.dll</PackagePath>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\UnityEngine.IMGUIModule.dll">
+      <PackagePath>UnityEngine.IMGUIModule.dll</PackagePath>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\Newtonsoft.Json.dll">
       <PackagePath>Newtonsoft.Json.dll</PackagePath>
