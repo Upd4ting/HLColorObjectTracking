@@ -8,8 +8,11 @@
 #include "PTServer.h"
 #include "PropFile.h"
 #include "Input.h"
+#include "ByteReader.h"
+#include "ByteWriter.h"
 
 using namespace std;
+using namespace Util;
 
 typedef unsigned char u8;
 
@@ -99,20 +102,6 @@ void* threadProcessData(void *p)
 	return NULL;
 }
 
-int getInt(char *buffer, int start)
-{
-	unsigned int num = ((u8)buffer[start] << 24) | ((u8)buffer[start + 1] << 16) | ((u8)buffer[start + 2] << 8) | ((u8)buffer[start + 3]);
-	return num;
-}
-
-void writeInt(char *buffer, int start, int n)
-{
-	buffer[start] = n & 0xff;
-	buffer[start + 1] = (n>>8)  & 0xff;
-	buffer[start + 2] = (n>>16) & 0xff;
-	buffer[start + 3] = (n>>24) & 0xff;
-}
-
 void handlerSigint(int sig)
 {
 	logger->write("Closing the server...");
@@ -141,8 +130,8 @@ int main(int argc, char **argv)
 	if (server == NULL)
 	{
 		logger->write("Error when creating the server!");
-		return 1;
-	}
+		return 1
+;	}
 
 	// Calculating number of workers
 	int numCPU = sysconf(_SC_NPROCESSORS_ONLN);
@@ -160,6 +149,7 @@ int main(int argc, char **argv)
 	// 	INT -> minH
 	// 	INT -> maxH
 	//  ... 
+	// FLOAT (4 byte) -> TimeStamp
 	// INT -> Width of the picture
 	// INT -> Size of the picture
 	// BYTES -> IMAGE
@@ -171,18 +161,17 @@ int main(int argc, char **argv)
 
 			socket->read(packet);
 
-			int numberRequest = getInt(packet, 0);
+			ByteReader reader(packet);
+			reader.SetEndian(big);
+
+			int numberRequest = reader.ReadInt32();
 
 			std::vector<REQUEST> requests;
 
-			int curOffset = 4;
-
 			for (int i = 0; i < numberRequest; i++)
 			{
-				int minH = getInt(packet, curOffset);
-				int maxH = getInt(packet, curOffset + 4);
-
-				curOffset += 8;
+				int minH = reader.ReadInt32();
+				int maxH = reader.ReadInt32();
 
 				REQUEST r;
 				r.minH = minH;
@@ -192,9 +181,9 @@ int main(int argc, char **argv)
 
 				requests.push_back(r);
 			}
-
-			int width = getInt(packet, curOffset);curOffset += 4;
-			int size = getInt(packet, curOffset);curOffset += 4;
+			long long int timestamp = reader.ReadInt64();
+			int width = reader.ReadInt32();
+			int size = reader.ReadInt32();
 
 			clock_t begin = clock();
 
@@ -206,7 +195,7 @@ int main(int argc, char **argv)
 			{
 				PARAMS *param = (PARAMS*) malloc(sizeof(PARAMS));
 				param->packet = packet;
-				param->start = curOffset + slice * i;
+				param->start = reader.Tell() + slice * i;
 				param->size = slice;
 				param->width = width;
 				param->requests = &requests;
@@ -226,23 +215,24 @@ int main(int argc, char **argv)
 			std::cout << "Elapsed sec for image processing: " << elapsed_secs << std::endl;
 
 			// PROTOCOL ANSWER
-			// Num request
+			// INT Number request
+			// LONG Timestamp
 			// INT POSX
 			// INT POSY
 			// For each request
-			char buffer[numberRequest * 8 + 4];
+			ByteWriter writer(1024);
+			writer.SetEndian(little);
 
-			int i = 0;
-
-			writeInt(buffer, i++, numberRequest);
+			writer.WriteInt32(numberRequest);
+			writer.WriteInt64(timestamp);
 
 			for (REQUEST &r : requests)
 			{
-				writeInt(buffer, i++ * 4, r.posX);
-				writeInt(buffer, i++ * 4, r.posY);
+				writer.WriteInt32(r.posX);
+				writer.WriteInt32(r.posY);
 			}
 
-			socket->write((void*) buffer, numberRequest * 8 + 4);
+			socket->write((void*) writer.GetData(), writer.Tell());
 			std::cout << "Response sent" << std::endl;
 		});
 	});

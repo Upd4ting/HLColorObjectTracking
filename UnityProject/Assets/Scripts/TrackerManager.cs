@@ -21,15 +21,19 @@ public class TrackerManager : MonoBehaviour {
 
     // Variable for Camera
     private Matrix4x4 _cameraToWorldMatrix = Matrix4x4.zero;
-    private Matrix4x4 _projectionMatrix = Matrix4x4.zero;
+    private Matrix4x4 _projectionMatrix    = Matrix4x4.zero;
     private byte[]    _latestImageBytes;
 
     private Resolution _resolution;
 
     // Variable for Server
-    private bool _running;
+    private bool         _running;
+    private MemoryStream _ms;
+    private BinaryWriter _bw;
+    private long _lastTimestamp = -1;
 #if !UNITY_EDITOR
     private StreamSocket _socket;
+    private DataWriter _writer;
 #endif
 
     private IntPtr       _spatialCoordinateSystemPtr;
@@ -50,13 +54,19 @@ public class TrackerManager : MonoBehaviour {
 #endif
     private void Awake() {
         try {
-#if !UNITY_EDITOR
+        #if !UNITY_EDITOR
             _socket = new StreamSocket();
             _socket.Control.NoDelay = true;
             _socket.Control.QualityOfService = SocketQualityOfService.LowLatency;
 
             await _socket.ConnectAsync(new HostName(serverIp), serverPort);
-#endif
+
+            _writer = new DataWriter(_socket.OutputStream);
+            _writer.ByteOrder = ByteOrder.BigEndian;
+        #endif
+            _ms = new MemoryStream();
+            _bw = new BinaryWriter(_ms);
+
             Debug.Log("Connected");
             _running = true;
             OnStart(); // Because our async Awake will be finished after the real Start method of Unity
@@ -70,13 +80,13 @@ public class TrackerManager : MonoBehaviour {
         if (!_running)
             return;
 
-        _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
-
-        CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
-
     #if !UNITY_EDITOR
         Task.Run(() => ReceiveData());
     #endif
+
+        _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
+
+        CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
     }
 
     private void OnDestroy() {
@@ -91,21 +101,24 @@ public class TrackerManager : MonoBehaviour {
     async
 #endif
     private void Destroy() {
-        if (_videoCapture != null)
-        {
+        if (_videoCapture != null) {
             _videoCapture.FrameSampleAcquired -= OnFrameSampleAcquired;
             _videoCapture.Dispose();
         }
 
-        if (_running)
-        {
-        #if !UNITY_EDITOR //TODO CHANGE SEND END_OF_CONNECTION HAHHA
+        if (_running) {
+        #if !UNITY_EDITOR
+            SendBytes(System.Text.Encoding.ASCII.GetBytes("END_OF_CONNECTION"), false);
+
+            _writer.DetachStream();
+            _writer.Dispose();
+
             await _socket.CancelIOAsync();
             _socket.Dispose();
             _socket = null;
+        #endif
             _running = false;
             Debug.Log("Closed");
-        #endif
         }
     }
 
@@ -121,7 +134,8 @@ public class TrackerManager : MonoBehaviour {
         CameraStreamHelper.Instance.SetNativeISpatialCoordinateSystemPtr(_spatialCoordinateSystemPtr);
 
         _resolution = CameraStreamHelper.Instance.GetLowestResolution();
-        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
+        //float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
+        float frameRate = 10;
 
         videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 
@@ -145,9 +159,6 @@ public class TrackerManager : MonoBehaviour {
         Debug.Log("Video capture started.");
     }
 
-#if !UNITY_EDITOR
-    async
-#endif
     private void OnFrameSampleAcquired(VideoCaptureSample sample) {
         if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength) _latestImageBytes = new byte[sample.dataLength];
         sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
@@ -165,65 +176,102 @@ public class TrackerManager : MonoBehaviour {
         }
 
         try {
-        //    MemoryStream ms = new MemoryStream();
-        //    BinaryWriter bw = new BinaryWriter(ms);
-        //    bw.Write(_trackers.Count);
+            _ms.SetLength(0);
+            _bw.Write(convertInt(_trackers.Count));
 
-        //    foreach (ObjectTracker ot in _trackers) {
-        //        bw.Write(ot.MinH);
-        //        bw.Write(ot.MaxH);
-        //    }
+            foreach (ObjectTracker ot in _trackers) {
+                _bw.Write(convertInt(ot.MinH));
+                _bw.Write(convertInt(ot.MaxH));
+            }
 
-        //    bw.Write(_latestImageBytes.Length);
-        //    bw.Write(_latestImageBytes);
+            var timeDiff = DateTime.UtcNow - new DateTime(1970, 1, 1);
+            long timestamp = (long) timeDiff.TotalMilliseconds;
 
-        //    byte[] toSend = ms.ToArray();
+            _bw.Write(convertLong(timestamp));
+            _bw.Write(convertInt(_resolution.width));
+            _bw.Write(convertInt(_latestImageBytes.Length));
+            _bw.Write(_latestImageBytes);
 
-        //#if !UNITY_EDITOR
-        //    using (DataWriter writer = new DataWriter(_socket.OutputStream)) {
-        //        writer.WriteInt32(toSend.Length);
-        //        writer.WriteBytes(toSend);
+            byte[] toSend = _ms.ToArray();
 
-        //        await writer.StoreAsync();
-
-        //        writer.DetachStream();
-        //        writer.Dispose();
-        //    }
-        //#endif
-        }
-        catch (Exception e) {
+#if !UNITY_EDITOR
+            SendBytes(toSend, true);
+#endif
+            Debug.Log("Sending request " + timestamp);
+        } catch (Exception e) {
             Debug.Log("Error: " + e.Message);
         }
-
-        Debug.Log("Sending request");
     }
 
 #if !UNITY_EDITOR
-    private async void ReceiveData() {
-        using (DataReader reader = new DataReader(_socket.InputStream)) {
+    private async void SendBytes(byte[] bytes, bool writeSize) {
+        if (writeSize)
+            _writer.WriteInt32(bytes.Length);
+        _writer.WriteBytes(bytes);
 
-            while (_running) {
-                reader.InputStreamOptions = InputStreamOptions.Partial;
+        await _writer.StoreAsync();
+    }
 
-                await reader.LoadAsync(reader.UnconsumedBufferLength);
+    async
+#endif
 
+    private void ReceiveData()
+    {
+        try {
+            BinaryReader reader = null;
+
+#if !UNITY_EDITOR
+            reader = new BinaryReader(_socket.InputStream.AsStreamForRead());
+#endif
+
+            Debug.Log("Reader running...");
+
+            while (_running)
+            {
                 int number = reader.ReadInt32();
-                
-                for (int i = 0; i < number; i++) {
+                long timestamp = reader.ReadInt64();
+
+                Debug.Log("Number request: " + number);
+
+                bool valid = _lastTimestamp == -1 || _lastTimestamp < timestamp;
+
+                for (int i = 0; i < number; i++)
+                {
                     int posx = reader.ReadInt32();
                     int posy = reader.ReadInt32();
 
-                    ReceivePosResult(i, posx, posy);
+                    if (valid) {
+                        ReceivePosResult(i, posx, posy);
+                    }
+                }
+
+                if (valid) {
+                    _lastTimestamp = timestamp;
                 }
             }
-            
-            reader.DetachStream();
-            reader.Dispose();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Exception when reading: " + e.Message);
         }
     }
-#endif
 
     private void ReceivePosResult(int index, int posx, int posy) {
         Debug.Log("Index " + index + " POSX " + posx + " POSY " + posy);
+    }
+
+    private static byte[] convertInt(int number) {
+        byte[] bytes = BitConverter.GetBytes(number);
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(bytes);
+        return bytes;
+    }
+
+    private static byte[] convertLong(long number)
+    {
+        byte[] bytes = BitConverter.GetBytes(number);
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(bytes);
+        return bytes;
     }
 }
