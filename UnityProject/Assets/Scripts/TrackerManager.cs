@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 using HoloLensCameraStream;
@@ -8,6 +9,7 @@ using UnityEngine;
 using UnityEngine.XR.WSA;
 
 using Resolution = HoloLensCameraStream.Resolution;
+using Debug = UnityEngine.Debug;
 
 #if !UNITY_EDITOR
 using Windows.Networking.Sockets;
@@ -30,7 +32,8 @@ public class TrackerManager : MonoBehaviour {
     private bool         _running;
     private MemoryStream _ms;
     private BinaryWriter _bw;
-    private long _lastTimestamp = -1;
+    private BinaryReader _br;
+    private long         _lastTimestamp = -1;
 #if !UNITY_EDITOR
     private StreamSocket _socket;
     private DataWriter _writer;
@@ -54,16 +57,17 @@ public class TrackerManager : MonoBehaviour {
 #endif
     private void Awake() {
         try {
-        #if !UNITY_EDITOR
+#if !UNITY_EDITOR
             _socket = new StreamSocket();
             _socket.Control.NoDelay = true;
             _socket.Control.QualityOfService = SocketQualityOfService.LowLatency;
 
             await _socket.ConnectAsync(new HostName(serverIp), serverPort);
 
+            _br = new BinaryReader(_socket.InputStream.AsStreamForRead());
             _writer = new DataWriter(_socket.OutputStream);
             _writer.ByteOrder = ByteOrder.BigEndian;
-        #endif
+#endif
             _ms = new MemoryStream();
             _bw = new BinaryWriter(_ms);
 
@@ -80,9 +84,9 @@ public class TrackerManager : MonoBehaviour {
         if (!_running)
             return;
 
-    #if !UNITY_EDITOR
-        Task.Run(() => ReceiveData());
-    #endif
+    //#if !UNITY_EDITOR
+    //    Task.Run(() => ReceiveData());
+    //    #endif
 
         _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
 
@@ -116,7 +120,7 @@ public class TrackerManager : MonoBehaviour {
             await _socket.CancelIOAsync();
             _socket.Dispose();
             _socket = null;
-        #endif
+                #endif
             _running = false;
             Debug.Log("Closed");
         }
@@ -134,8 +138,9 @@ public class TrackerManager : MonoBehaviour {
         CameraStreamHelper.Instance.SetNativeISpatialCoordinateSystemPtr(_spatialCoordinateSystemPtr);
 
         _resolution = CameraStreamHelper.Instance.GetLowestResolution();
-        //float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
-        float frameRate = 10;
+        float frameRate = CameraStreamHelper.Instance.GetLowestFrameRate(_resolution);
+
+        Debug.Log("Frame rate: " + frameRate);
 
         videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 
@@ -176,6 +181,8 @@ public class TrackerManager : MonoBehaviour {
         }
 
         try {
+            Stopwatch writingWatch = Stopwatch.StartNew();
+
             _ms.SetLength(0);
             _bw.Write(convertInt(_trackers.Count));
 
@@ -184,8 +191,8 @@ public class TrackerManager : MonoBehaviour {
                 _bw.Write(convertInt(ot.MaxH));
             }
 
-            var timeDiff = DateTime.UtcNow - new DateTime(1970, 1, 1);
-            long timestamp = (long) timeDiff.TotalMilliseconds;
+            TimeSpan timeDiff  = DateTime.UtcNow - new DateTime(1970, 1, 1);
+            long     timestamp = (long) timeDiff.TotalMilliseconds;
 
             _bw.Write(convertLong(timestamp));
             _bw.Write(convertInt(_resolution.width));
@@ -194,10 +201,19 @@ public class TrackerManager : MonoBehaviour {
 
             byte[] toSend = _ms.ToArray();
 
+            Debug.Log("Writing: " + writingWatch.ElapsedMilliseconds);
+
+            Stopwatch sending = Stopwatch.StartNew();
+
 #if !UNITY_EDITOR
             SendBytes(toSend, true);
 #endif
-            Debug.Log("Sending request " + timestamp);
+            
+            Debug.Log("Sending: " + sending.ElapsedMilliseconds);
+
+            Stopwatch receiving = Stopwatch.StartNew();
+            ReceiveData();
+            Debug.Log("Receiving: " + receiving.ElapsedMilliseconds);
         } catch (Exception e) {
             Debug.Log("Error: " + e.Message);
         }
@@ -215,43 +231,25 @@ public class TrackerManager : MonoBehaviour {
     async
 #endif
 
-    private void ReceiveData()
-    {
+    private void ReceiveData() {
         try {
-            BinaryReader reader = null;
+            Stopwatch wait = Stopwatch.StartNew();
+            int  number    = _br.ReadInt32();
+            Debug.Log("Wait time: " + wait.ElapsedMilliseconds);
+            long timestamp = _br.ReadInt64();
 
-#if !UNITY_EDITOR
-            reader = new BinaryReader(_socket.InputStream.AsStreamForRead());
-#endif
+            bool valid = _lastTimestamp == -1 || _lastTimestamp < timestamp;
 
-            Debug.Log("Reader running...");
-
-            while (_running)
+            for (int i = 0; i < number; i++)
             {
-                int number = reader.ReadInt32();
-                long timestamp = reader.ReadInt64();
+                int posx = _br.ReadInt32();
+                int posy = _br.ReadInt32();
 
-                Debug.Log("Number request: " + number);
-
-                bool valid = _lastTimestamp == -1 || _lastTimestamp < timestamp;
-
-                for (int i = 0; i < number; i++)
-                {
-                    int posx = reader.ReadInt32();
-                    int posy = reader.ReadInt32();
-
-                    if (valid) {
-                        ReceivePosResult(i, posx, posy);
-                    }
-                }
-
-                if (valid) {
-                    _lastTimestamp = timestamp;
-                }
+                if (valid) ReceivePosResult(i, posx, posy);
             }
-        }
-        catch (Exception e)
-        {
+
+            if (valid) _lastTimestamp = timestamp;
+        } catch (Exception e) {
             Debug.Log("Exception when reading: " + e.Message);
         }
     }
@@ -267,8 +265,7 @@ public class TrackerManager : MonoBehaviour {
         return bytes;
     }
 
-    private static byte[] convertLong(long number)
-    {
+    private static byte[] convertLong(long number) {
         byte[] bytes = BitConverter.GetBytes(number);
         if (BitConverter.IsLittleEndian)
             Array.Reverse(bytes);

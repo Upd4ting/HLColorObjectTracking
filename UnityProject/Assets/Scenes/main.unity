@@ -437,7 +437,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ac126950c967da40835f023170ff853, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxH: 64
-  minH: 56
+  maxH: 11
+  minH: 0
   tManager: {fileID: 1171544327}
   trackingEnabled: 1

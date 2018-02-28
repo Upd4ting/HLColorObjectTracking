@@ -1,1 +1,0 @@
-D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\App\ColorRecognizer\ColorRecognizer.csproj;x86

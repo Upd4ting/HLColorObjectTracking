@@ -3,7 +3,7 @@
 /UnityProject/[Oo]bj/
 /UnityProject/[Bb]uild/
 /UnityProject/[Bb]uilds/
-/UnityProject/App/
+/UnityProject/App/**
 /UnityProject/Assets/AssetStoreTools*
 
 # Visual Studio 2015 cache directory

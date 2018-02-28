@@ -85,7 +85,7 @@ void* threadProcessData(void *p)
 
 	    for (REQUEST &r : *(param->requests))
 	    {
-	    	if (h >= r.minH && h <= r.maxH)
+	    	if (h >= r.minH && h <= r.maxH && s > 75) // Saturation higher than 75 otherwise that's not a correct colour
 	    	{
 	    		pthread_mutex_lock(&mutex);
 	    		if (r.posX == -1 && r.posY == -1)
@@ -161,6 +161,8 @@ int main(int argc, char **argv)
 
 			socket->read(packet);
 
+			clock_t totalBegin = clock();
+
 			ByteReader reader(packet);
 			reader.SetEndian(big);
 
@@ -233,7 +235,10 @@ int main(int argc, char **argv)
 			}
 
 			socket->write((void*) writer.GetData(), writer.Tell());
-			std::cout << "Response sent" << std::endl;
+
+			clock_t totalEnd = clock();
+			double elapsed_secs2 = double(totalEnd - totalBegin) / CLOCKS_PER_SEC;
+			std::cout << "Response sent in " << elapsed_secs2 << std::endl;
 		});
 	});
 
