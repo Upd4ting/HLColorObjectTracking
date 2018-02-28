@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 using HoloLensCameraStream;
 
@@ -10,13 +11,6 @@ using UnityEngine.XR.WSA;
 
 using Resolution = HoloLensCameraStream.Resolution;
 using Debug = UnityEngine.Debug;
-
-#if !UNITY_EDITOR
-using Windows.Networking.Sockets;
-using Windows.Networking;
-using System.Threading.Tasks;
-using Windows.Storage.Streams;
-#endif
 
 public class TrackerManager : MonoBehaviour {
     private readonly List<ObjectTracker> _trackers = new List<ObjectTracker>();
@@ -28,19 +22,9 @@ public class TrackerManager : MonoBehaviour {
 
     private Resolution _resolution;
 
-    // Variable for Server
-    private bool         _running;
-    private MemoryStream _ms;
-    private BinaryWriter _bw;
-    private BinaryReader _br;
-    private long         _lastTimestamp = -1;
-#if !UNITY_EDITOR
-    private StreamSocket _socket;
-    private DataWriter _writer;
-#endif
-
     private IntPtr       _spatialCoordinateSystemPtr;
     private VideoCapture _videoCapture;
+    private bool _finished;
 
     [Header("Server settings")] [Tooltip("The server IP")] [SerializeField]
     private string serverIp;
@@ -52,45 +36,12 @@ public class TrackerManager : MonoBehaviour {
         _trackers.Add(tracker);
     }
 
-#if !UNITY_EDITOR
-    async
-#endif
-    private void Awake() {
-        try {
-#if !UNITY_EDITOR
-            _socket = new StreamSocket();
-            _socket.Control.NoDelay = true;
-            _socket.Control.QualityOfService = SocketQualityOfService.LowLatency;
-
-            await _socket.ConnectAsync(new HostName(serverIp), serverPort);
-
-            _br = new BinaryReader(_socket.InputStream.AsStreamForRead());
-            _writer = new DataWriter(_socket.OutputStream);
-            _writer.ByteOrder = ByteOrder.BigEndian;
-#endif
-            _ms = new MemoryStream();
-            _bw = new BinaryWriter(_ms);
-
-            Debug.Log("Connected");
-            _running = true;
-            OnStart(); // Because our async Awake will be finished after the real Start method of Unity
-        } catch (Exception e) {
-            Debug.LogError("Couldn't connect to the server! Exception: " + e.Message);
-            _running = false;
-        }
-    }
-
-    private void OnStart() {
-        if (!_running)
-            return;
-
-    //#if !UNITY_EDITOR
-    //    Task.Run(() => ReceiveData());
-    //    #endif
-
+    private void Start() {
         _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
 
         CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
+
+        _finished = false;
     }
 
     private void OnDestroy() {
@@ -101,28 +52,10 @@ public class TrackerManager : MonoBehaviour {
         Destroy();
     }
 
-#if !UNITY_EDITOR
-    async
-#endif
     private void Destroy() {
         if (_videoCapture != null) {
             _videoCapture.FrameSampleAcquired -= OnFrameSampleAcquired;
             _videoCapture.Dispose();
-        }
-
-        if (_running) {
-        #if !UNITY_EDITOR
-            SendBytes(System.Text.Encoding.ASCII.GetBytes("END_OF_CONNECTION"), false);
-
-            _writer.DetachStream();
-            _writer.Dispose();
-
-            await _socket.CancelIOAsync();
-            _socket.Dispose();
-            _socket = null;
-                #endif
-            _running = false;
-            Debug.Log("Closed");
         }
     }
 
@@ -138,9 +71,7 @@ public class TrackerManager : MonoBehaviour {
         CameraStreamHelper.Instance.SetNativeISpatialCoordinateSystemPtr(_spatialCoordinateSystemPtr);
 
         _resolution = CameraStreamHelper.Instance.GetLowestResolution();
-        float frameRate = CameraStreamHelper.Instance.GetLowestFrameRate(_resolution);
-
-        Debug.Log("Frame rate: " + frameRate);
+        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
 
         videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 
@@ -180,95 +111,23 @@ public class TrackerManager : MonoBehaviour {
             _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
         }
 
-        try {
-            Stopwatch writingWatch = Stopwatch.StartNew();
-
-            _ms.SetLength(0);
-            _bw.Write(convertInt(_trackers.Count));
-
-            foreach (ObjectTracker ot in _trackers) {
-                _bw.Write(convertInt(ot.MinH));
-                _bw.Write(convertInt(ot.MaxH));
-            }
-
-            TimeSpan timeDiff  = DateTime.UtcNow - new DateTime(1970, 1, 1);
-            long     timestamp = (long) timeDiff.TotalMilliseconds;
-
-            _bw.Write(convertLong(timestamp));
-            _bw.Write(convertInt(_resolution.width));
-            _bw.Write(convertInt(_latestImageBytes.Length));
-            _bw.Write(_latestImageBytes);
-
-            byte[] toSend = _ms.ToArray();
-
-            Debug.Log("Writing: " + writingWatch.ElapsedMilliseconds);
-
-            Stopwatch sending = Stopwatch.StartNew();
-
-#if !UNITY_EDITOR
-            SendBytes(toSend, true);
-#endif
-            
-            Debug.Log("Sending: " + sending.ElapsedMilliseconds);
-
-            Stopwatch receiving = Stopwatch.StartNew();
-            ReceiveData();
-            Debug.Log("Receiving: " + receiving.ElapsedMilliseconds);
-        } catch (Exception e) {
-            Debug.Log("Error: " + e.Message);
+        if (_finished)
+            _finished = false;
+        else {
+            return;
         }
-    }
 
-#if !UNITY_EDITOR
-    private async void SendBytes(byte[] bytes, bool writeSize) {
-        if (writeSize)
-            _writer.WriteInt32(bytes.Length);
-        _writer.WriteBytes(bytes);
+        UnityEngine.WSA.Application.InvokeOnAppThread(() => {
+            int slice = _latestImageBytes.Length / 8;
+            List<Thread> workers = new List<Thread>();
 
-        await _writer.StoreAsync();
-    }
-
-    async
-#endif
-
-    private void ReceiveData() {
-        try {
-            Stopwatch wait = Stopwatch.StartNew();
-            int  number    = _br.ReadInt32();
-            Debug.Log("Wait time: " + wait.ElapsedMilliseconds);
-            long timestamp = _br.ReadInt64();
-
-            bool valid = _lastTimestamp == -1 || _lastTimestamp < timestamp;
-
-            for (int i = 0; i < number; i++)
-            {
-                int posx = _br.ReadInt32();
-                int posy = _br.ReadInt32();
-
-                if (valid) ReceivePosResult(i, posx, posy);
+            for (int i = 0; i < 8; i++) {
+                Thread t = new Thread(new ParameterizedThreadStart());
             }
-
-            if (valid) _lastTimestamp = timestamp;
-        } catch (Exception e) {
-            Debug.Log("Exception when reading: " + e.Message);
-        }
+        }, false);
     }
 
-    private void ReceivePosResult(int index, int posx, int posy) {
-        Debug.Log("Index " + index + " POSX " + posx + " POSY " + posy);
-    }
+    private void processImageThread() {
 
-    private static byte[] convertInt(int number) {
-        byte[] bytes = BitConverter.GetBytes(number);
-        if (BitConverter.IsLittleEndian)
-            Array.Reverse(bytes);
-        return bytes;
-    }
-
-    private static byte[] convertLong(long number) {
-        byte[] bytes = BitConverter.GetBytes(number);
-        if (BitConverter.IsLittleEndian)
-            Array.Reverse(bytes);
-        return bytes;
     }
 }
