@@ -10,6 +10,7 @@
 #include "Input.h"
 #include "ByteReader.h"
 #include "ByteWriter.h"
+#include "lodepng.h"
 
 using namespace std;
 using namespace Util;
@@ -24,7 +25,7 @@ typedef struct Request {
 } REQUEST;
 
 typedef struct Params {
-	char *packet;
+	std::vector<unsigned char> *image;
 	int start;
 	int size;
 	int width;
@@ -75,9 +76,9 @@ void* threadProcessData(void *p)
 	PARAMS *param = (PARAMS*) p;
 	for (int i = 0; i < param->size; i += 16)
 	{
-	    char b = param->packet[param->start + i];
-	    char g = param->packet[param->start + i + 1];
-	    char r = param->packet[param->start + i + 2];
+		char b = param->image->at(param->start + i);
+		char g = param->image->at(param->start + i + 1);
+		char r = param->image->at(param->start + i + 2);
 
 	    float h, s, v;
 
@@ -130,8 +131,8 @@ int main(int argc, char **argv)
 	if (server == NULL)
 	{
 		logger->write("Error when creating the server!");
-		return 1
-;	}
+		return 1;
+	}
 
 	// Calculating number of workers
 	int numCPU = sysconf(_SC_NPROCESSORS_ONLN);
@@ -151,6 +152,7 @@ int main(int argc, char **argv)
 	//  ... 
 	// FLOAT (4 byte) -> TimeStamp
 	// INT -> Width of the picture
+	// INT -> Height of the picture
 	// INT -> Size of the picture
 	// BYTES -> IMAGE
 
@@ -184,8 +186,15 @@ int main(int argc, char **argv)
 				requests.push_back(r);
 			}
 			long long int timestamp = reader.ReadInt64();
-			int width = reader.ReadInt32();
+			unsigned width = (unsigned) reader.ReadInt32();
+			unsigned height = (unsigned) reader.ReadInt32();
 			int size = reader.ReadInt32();
+
+			// Decoding png picture
+
+			std::vector<unsigned char> pngArray = reader.ReadUnsignedBytes(size);
+			std::vector<unsigned char> image;
+			lodepng::decode(image, width, height, pngArray);
 
 			clock_t begin = clock();
 
@@ -196,8 +205,8 @@ int main(int argc, char **argv)
 			for (int i = 0; i < NW; i++) 
 			{
 				PARAMS *param = (PARAMS*) malloc(sizeof(PARAMS));
-				param->packet = packet;
-				param->start = reader.Tell() + slice * i;
+				param->image = &image;
+				param->start = slice * i;
 				param->size = slice;
 				param->width = width;
 				param->requests = &requests;

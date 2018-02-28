@@ -40,6 +40,31 @@ void ByteReader::Seek(long unsigned int target)
   pointer = target;
 }
 
+unsigned char ByteReader::ReadUnsignedByte()
+{
+  return ReadAny<unsigned char>();
+}
+
+std::vector<unsigned char> ByteReader::ReadUnsignedBytes(int size)
+{
+  std::vector<unsigned char> bytes;
+
+  for (int i = 0; i < size; i++)
+    bytes.push_back(ReadUnsignedByte());
+
+  return bytes;
+}
+
+std::vector<char> ByteReader::ReadBytes(int size)
+{
+  std::vector<char> bytes;
+
+  for (int i = 0; i < size; i++)
+    bytes.push_back(ReadByte());
+
+  return bytes;
+}
+
 char ByteReader::ReadByte()
 {
   return ReadAny<char>();

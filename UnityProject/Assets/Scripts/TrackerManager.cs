@@ -10,11 +10,12 @@ using UnityEngine.XR.WSA;
 
 using Resolution = HoloLensCameraStream.Resolution;
 using Debug = UnityEngine.Debug;
+using System.Collections;
+using System.Threading.Tasks;
 
 #if !UNITY_EDITOR
 using Windows.Networking.Sockets;
 using Windows.Networking;
-using System.Threading.Tasks;
 using Windows.Storage.Streams;
 #endif
 
@@ -25,6 +26,8 @@ public class TrackerManager : MonoBehaviour {
     private Matrix4x4 _cameraToWorldMatrix = Matrix4x4.zero;
     private Matrix4x4 _projectionMatrix    = Matrix4x4.zero;
     private byte[]    _latestImageBytes;
+    private byte[] _png;
+    private Texture2D _texture2D;
 
     private Resolution _resolution;
 
@@ -57,6 +60,7 @@ public class TrackerManager : MonoBehaviour {
 #endif
     private void Awake() {
         try {
+
 #if !UNITY_EDITOR
             _socket = new StreamSocket();
             _socket.Control.NoDelay = true;
@@ -84,9 +88,7 @@ public class TrackerManager : MonoBehaviour {
         if (!_running)
             return;
 
-    //#if !UNITY_EDITOR
-    //    Task.Run(() => ReceiveData());
-    //    #endif
+        //Task.Run(() => ReceiveData());
 
         _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
 
@@ -111,6 +113,7 @@ public class TrackerManager : MonoBehaviour {
         }
 
         if (_running) {
+
         #if !UNITY_EDITOR
             SendBytes(System.Text.Encoding.ASCII.GetBytes("END_OF_CONNECTION"), false);
 
@@ -120,7 +123,8 @@ public class TrackerManager : MonoBehaviour {
             await _socket.CancelIOAsync();
             _socket.Dispose();
             _socket = null;
-                #endif
+         #endif
+
             _running = false;
             Debug.Log("Closed");
         }
@@ -138,9 +142,7 @@ public class TrackerManager : MonoBehaviour {
         CameraStreamHelper.Instance.SetNativeISpatialCoordinateSystemPtr(_spatialCoordinateSystemPtr);
 
         _resolution = CameraStreamHelper.Instance.GetLowestResolution();
-        float frameRate = CameraStreamHelper.Instance.GetLowestFrameRate(_resolution);
-
-        Debug.Log("Frame rate: " + frameRate);
+        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
 
         videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 
@@ -151,6 +153,8 @@ public class TrackerManager : MonoBehaviour {
         cameraParams.pixelFormat            = CapturePixelFormat.BGRA32;
         cameraParams.rotateImage180Degrees  = false;
         cameraParams.enableHolograms        = false;
+
+        _texture2D = new Texture2D(_resolution.width, _resolution.height, TextureFormat.BGRA32, false);
 
         videoCapture.StartVideoModeAsync(cameraParams, OnVideoModeStarted);
     }
@@ -180,24 +184,39 @@ public class TrackerManager : MonoBehaviour {
             _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
         }
 
-        try {
+        UnityEngine.WSA.Application.InvokeOnAppThread(() => {
+            _texture2D.LoadRawTextureData(_latestImageBytes);
+            Stopwatch encode = Stopwatch.StartNew();
+            _png = _texture2D.EncodeToPNG();
+            Debug.Log("Size: " + _png.Length);
+            Debug.Log("Encode time " + encode.ElapsedMilliseconds);
+
+            Task.Run(() => ConstructPacketAndSend());
+        }, false);
+    }
+
+    private void ConstructPacketAndSend() {
+        try
+        {
             Stopwatch writingWatch = Stopwatch.StartNew();
 
             _ms.SetLength(0);
             _bw.Write(convertInt(_trackers.Count));
 
-            foreach (ObjectTracker ot in _trackers) {
+            foreach (ObjectTracker ot in _trackers)
+            {
                 _bw.Write(convertInt(ot.MinH));
                 _bw.Write(convertInt(ot.MaxH));
             }
 
             TimeSpan timeDiff  = DateTime.UtcNow - new DateTime(1970, 1, 1);
-            long     timestamp = (long) timeDiff.TotalMilliseconds;
+            long     timestamp = (long)timeDiff.TotalMilliseconds;
 
             _bw.Write(convertLong(timestamp));
             _bw.Write(convertInt(_resolution.width));
-            _bw.Write(convertInt(_latestImageBytes.Length));
-            _bw.Write(_latestImageBytes);
+            _bw.Write(convertInt(_resolution.height));
+            _bw.Write(convertInt(_png.Length));
+            _bw.Write(_png);
 
             byte[] toSend = _ms.ToArray();
 
@@ -205,16 +224,18 @@ public class TrackerManager : MonoBehaviour {
 
             Stopwatch sending = Stopwatch.StartNew();
 
-#if !UNITY_EDITOR
+        #if !UNITY_EDITOR
             SendBytes(toSend, true);
-#endif
-            
+        #endif
+
             Debug.Log("Sending: " + sending.ElapsedMilliseconds);
 
             Stopwatch receiving = Stopwatch.StartNew();
             ReceiveData();
             Debug.Log("Receiving: " + receiving.ElapsedMilliseconds);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             Debug.Log("Error: " + e.Message);
         }
     }
@@ -227,8 +248,6 @@ public class TrackerManager : MonoBehaviour {
 
         await _writer.StoreAsync();
     }
-
-    async
 #endif
 
     private void ReceiveData() {

@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 
 public class ObjectTracker : MonoBehaviour {
-    [Header("Tracker settings")] [Tooltip("The maximum H required (HSV color format)")] [SerializeField]
+    [Tooltip("The maximum H required (HSV color format)")] [SerializeField]
     private int maxH;
 
-    [Tooltip("The minimum H required (HSV color format)")] [SerializeField]
+    [Header("Tracker settings")] [Tooltip("The minimum H required (HSV color format)")] [SerializeField]
     private int minH;
 
     [Tooltip("The Tracker manager to use")] [SerializeField]

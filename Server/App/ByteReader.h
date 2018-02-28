@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 #if CHAR_BIT != 8
 #error "unsupported char size"
@@ -54,6 +55,10 @@ namespace Util
     float ReadSingle();
 
     char ReadByte();
+    std::vector<char> ReadBytes(int size);
+
+    unsigned char ReadUnsignedByte();
+    std::vector<unsigned char> ReadUnsignedBytes(int size);
 
     long unsigned int Tell();
     void Seek(long unsigned int);

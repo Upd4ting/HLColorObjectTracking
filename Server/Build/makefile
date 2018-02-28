@@ -5,7 +5,7 @@ GPP = g++ -lpthread -m64 -Wall -std=c++11 -I $(LIB)
 
 OBJ_LIBRARY = Input.o CSVFile.o PropFile.o Menu.o Logger.o Socket.o Server.o Client.o SocketUDP.o SocketTCP.o ServerTCP.o ServerUDP.o PTServer.o ClientUDP.o ClientTCP.o
 
-OBJ_SERVER = servermain.o ByteReader.o ByteWriter.o
+OBJ_SERVER = servermain.o ByteReader.o ByteWriter.o lodepng.o
 
 .SILENT:
 
@@ -70,3 +70,6 @@ ByteReader.o: $(APP)/ByteReader.cpp $(APP)/ByteReader.h
 
 ByteWriter.o: $(APP)/ByteWriter.cpp $(APP)/ByteWriter.h
 	$(GPP) -c $(APP)/ByteWriter.cpp
+
+lodepng.o: $(APP)/lodepng.cpp $(APP)/lodepng.h
+	$(GPP) -c $(APP)/lodepng.cpp
