@@ -10,6 +10,7 @@
 #include "Input.h"
 #include "ByteReader.h"
 #include "ByteWriter.h"
+#include "RgbHsv.h"
 
 using namespace std;
 using namespace Util;
@@ -19,6 +20,8 @@ typedef unsigned char u8;
 typedef struct Request {
 	int minH;
 	int maxH;
+	int minLight;
+	int minSaturation;
 	int posX;
 	int posY;
 } REQUEST;
@@ -37,55 +40,22 @@ Logger *logger = NULL;
 // Var for threads
 pthread_mutex_t mutex;
 
-void RGBtoHSV(float fR, float fG, float fB, float& fH, float& fS, float& fV) {
-  float fCMax = max(max(fR, fG), fB);
-  float fCMin = min(min(fR, fG), fB);
-  float fDelta = fCMax - fCMin;
-  
-  if(fDelta > 0) {
-    if(fCMax == fR) {
-      fH = 60 * (fmod(((fG - fB) / fDelta), 6));
-    } else if(fCMax == fG) {
-      fH = 60 * (((fB - fR) / fDelta) + 2);
-    } else if(fCMax == fB) {
-      fH = 60 * (((fR - fG) / fDelta) + 4);
-    }
-    
-    if(fCMax > 0) {
-      fS = fDelta / fCMax;
-    } else {
-      fS = 0;
-    }
-    
-    fV = fCMax;
-  } else {
-    fH = 0;
-    fS = 0;
-    fV = fCMax;
-  }
-  
-  if(fH < 0) {
-    fH = 360 + fH;
-  }
-}
-
 // Thread function
 void* threadProcessData(void *p)
 {
 	PARAMS *param = (PARAMS*) p;
-	for (int i = 0; i < param->size; i += 16)
+	for (int i = 0; i < param->size; i += 4)
 	{
-	    char b = param->packet[param->start + i];
-	    char g = param->packet[param->start + i + 1];
-	    char r = param->packet[param->start + i + 2];
+	    unsigned char b = param->packet[param->start + i];
+	    unsigned char g = param->packet[param->start + i + 1];
+	    unsigned char r = param->packet[param->start + i + 2];
 
-	    float h, s, v;
-
-	    RGBtoHSV((float)r, (float)g, (float)b, h, s, v);
+	    RGB data = RGB(r, g, b);
+	    HSV value = RGBToHSV(data);
 
 	    for (REQUEST &r : *(param->requests))
 	    {
-	    	if (h >= r.minH && h <= r.maxH && s > 75) // Saturation higher than 75 otherwise that's not a correct colour
+	    	if (value.H >= r.minH && value.H <= r.maxH && value.S >= r.minSaturation && value.V >= r.minLight)
 	    	{
 	    		pthread_mutex_lock(&mutex);
 	    		if (r.posX == -1 && r.posY == -1)
@@ -148,9 +118,12 @@ int main(int argc, char **argv)
 	// INT -> Number of requests
 	// 	INT -> minH
 	// 	INT -> maxH
+	//  INT -> minSaturation
+	//  INT -> minLight
 	//  ... 
 	// FLOAT (4 byte) -> TimeStamp
 	// INT -> Width of the picture
+	// INT -> Height of the picture
 	// INT -> Size of the picture
 	// BYTES -> IMAGE
 
@@ -172,12 +145,11 @@ int main(int argc, char **argv)
 
 			for (int i = 0; i < numberRequest; i++)
 			{
-				int minH = reader.ReadInt32();
-				int maxH = reader.ReadInt32();
-
 				REQUEST r;
-				r.minH = minH;
-				r.maxH = maxH;
+				r.minH = reader.ReadInt32();
+				r.maxH = reader.ReadInt32();
+				r.minSaturation = reader.ReadInt32();
+				r.minLight = reader.ReadInt32();
 				r.posX = -1;
 				r.posY = -1;
 

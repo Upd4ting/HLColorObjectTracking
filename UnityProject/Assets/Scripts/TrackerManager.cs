@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 
 using HoloLensCameraStream;
 
 using UnityEngine;
 using UnityEngine.XR.WSA;
 
+using Application = UnityEngine.WSA.Application;
 using Resolution = HoloLensCameraStream.Resolution;
-using Debug = UnityEngine.Debug;
 
 #if !UNITY_EDITOR
 using Windows.Networking.Sockets;
@@ -57,7 +57,7 @@ public class TrackerManager : MonoBehaviour {
 #endif
     private void Awake() {
         try {
-#if !UNITY_EDITOR
+        #if !UNITY_EDITOR
             _socket = new StreamSocket();
             _socket.Control.NoDelay = true;
             _socket.Control.QualityOfService = SocketQualityOfService.LowLatency;
@@ -67,7 +67,7 @@ public class TrackerManager : MonoBehaviour {
             _br = new BinaryReader(_socket.InputStream.AsStreamForRead());
             _writer = new DataWriter(_socket.OutputStream);
             _writer.ByteOrder = ByteOrder.BigEndian;
-#endif
+        #endif
             _ms = new MemoryStream();
             _bw = new BinaryWriter(_ms);
 
@@ -84,9 +84,7 @@ public class TrackerManager : MonoBehaviour {
         if (!_running)
             return;
 
-    //#if !UNITY_EDITOR
-    //    Task.Run(() => ReceiveData());
-    //    #endif
+        Task.Run(() => ReceiveData());
 
         _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
 
@@ -120,7 +118,7 @@ public class TrackerManager : MonoBehaviour {
             await _socket.CancelIOAsync();
             _socket.Dispose();
             _socket = null;
-                #endif
+                        #endif
             _running = false;
             Debug.Log("Closed");
         }
@@ -168,27 +166,28 @@ public class TrackerManager : MonoBehaviour {
         if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength) _latestImageBytes = new byte[sample.dataLength];
         sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
 
-        if (_projectionMatrix == Matrix4x4.zero || _cameraToWorldMatrix == Matrix4x4.zero) {
-            float[] cameraToWorldMatrixAsFloat;
-            float[] projectionMatrixAsFloat;
-            if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false) {
-                Debug.Log("Failed to get camera to world or projection matrix");
-                return;
-            }
-
-            _cameraToWorldMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(cameraToWorldMatrixAsFloat);
-            _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
+        float[] cameraToWorldMatrixAsFloat;
+        float[] projectionMatrixAsFloat;
+        if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false)
+        {
+            Debug.Log("Failed to get camera to world or projection matrix");
+            return;
         }
 
-        try {
-            Stopwatch writingWatch = Stopwatch.StartNew();
+        _cameraToWorldMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(cameraToWorldMatrixAsFloat);
+        _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
+        
+        sample.Dispose();
 
+        try {
             _ms.SetLength(0);
             _bw.Write(convertInt(_trackers.Count));
 
             foreach (ObjectTracker ot in _trackers) {
                 _bw.Write(convertInt(ot.MinH));
                 _bw.Write(convertInt(ot.MaxH));
+                _bw.Write(convertInt(ot.MinSaturation));
+                _bw.Write(convertInt(ot.MinLight));
             }
 
             TimeSpan timeDiff  = DateTime.UtcNow - new DateTime(1970, 1, 1);
@@ -201,19 +200,9 @@ public class TrackerManager : MonoBehaviour {
 
             byte[] toSend = _ms.ToArray();
 
-            Debug.Log("Writing: " + writingWatch.ElapsedMilliseconds);
-
-            Stopwatch sending = Stopwatch.StartNew();
-
-#if !UNITY_EDITOR
+        #if !UNITY_EDITOR
             SendBytes(toSend, true);
-#endif
-            
-            Debug.Log("Sending: " + sending.ElapsedMilliseconds);
-
-            Stopwatch receiving = Stopwatch.StartNew();
-            ReceiveData();
-            Debug.Log("Receiving: " + receiving.ElapsedMilliseconds);
+        #endif
         } catch (Exception e) {
             Debug.Log("Error: " + e.Message);
         }
@@ -227,35 +216,43 @@ public class TrackerManager : MonoBehaviour {
 
         await _writer.StoreAsync();
     }
-
-    async
 #endif
 
     private void ReceiveData() {
-        try {
-            Stopwatch wait = Stopwatch.StartNew();
-            int  number    = _br.ReadInt32();
-            Debug.Log("Wait time: " + wait.ElapsedMilliseconds);
-            long timestamp = _br.ReadInt64();
+        while (_running)
+            try {
+                int  number    = _br.ReadInt32();
+                long timestamp = _br.ReadInt64();
 
-            bool valid = _lastTimestamp == -1 || _lastTimestamp < timestamp;
+                bool valid = _lastTimestamp == -1 || _lastTimestamp < timestamp;
 
-            for (int i = 0; i < number; i++)
-            {
-                int posx = _br.ReadInt32();
-                int posy = _br.ReadInt32();
+                for (int i = 0; i < number; i++) {
+                    int posx = _br.ReadInt32();
+                    int posy = _br.ReadInt32();
 
-                if (valid) ReceivePosResult(i, posx, posy);
+                    if (valid) ReceivePosResult(i, posx, posy);
+                }
+
+                if (valid) _lastTimestamp = timestamp;
+            } catch (Exception e) {
+                Debug.Log("Exception when reading: " + e.Message);
             }
-
-            if (valid) _lastTimestamp = timestamp;
-        } catch (Exception e) {
-            Debug.Log("Exception when reading: " + e.Message);
-        }
     }
 
     private void ReceivePosResult(int index, int posx, int posy) {
-        Debug.Log("Index " + index + " POSX " + posx + " POSY " + posy);
+        Debug.Log("Nope");
+        if (posx == -1 || posy == -1)
+            return;
+
+        Vector2 point      = new Vector2(posx, posy);
+        Vector3 worldPoint = LocatableCameraUtils.PixelCoordToWorldCoord(_cameraToWorldMatrix, _projectionMatrix, _resolution, point);
+        Debug.Log("Receive something");
+
+        Application.InvokeOnAppThread(() => {
+            ObjectTracker ot = _trackers[index];
+
+            ot.gameObject.transform.position = worldPoint;
+        }, false);
     }
 
     private static byte[] convertInt(int number) {
