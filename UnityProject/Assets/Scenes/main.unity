@@ -124,6 +124,7 @@ GameObject:
   - component: {fileID: 331780475}
   - component: {fileID: 331780474}
   - component: {fileID: 331780473}
+  - component: {fileID: 331780477}
   m_Layer: 0
   m_Name: Hololens Camera
   m_TagString: MainCamera
@@ -192,8 +193,19 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &331780477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 331780472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7a303625e450b499551864fb15277d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &647663275
 GameObject:
   m_ObjectHideFlags: 0
@@ -257,7 +269,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!1 &1171544326
 GameObject:
@@ -286,8 +298,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a0cafd67fadb34d99d89f52f976b5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverIp: 91.134.172.79
-  serverPort: 32020
 --- !u!4 &1171544328
 Transform:
   m_ObjectHideFlags: 0
@@ -299,48 +309,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1310831215
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  serializedVersion: 5
-  m_Component:
-  - component: {fileID: 1310831219}
-  - component: {fileID: 1310831220}
-  m_Layer: 0
-  m_Name: Stream Camera
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1310831219
-Transform:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1310831215}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 6, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1310831220
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1310831215}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d7a303625e450b499551864fb15277d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1383785349
 GameObject:
   m_ObjectHideFlags: 0
@@ -420,11 +390,11 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1383785349}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 5.95, z: 5}
+  m_LocalPosition: {x: 0, y: 0.02, z: 0.31}
   m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1383785354
 MonoBehaviour:
@@ -437,9 +407,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ac126950c967da40835f023170ff853, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxH: 105
-  minH: 98
-  minLight: 50
-  minSaturation: 75
+  maxH: 60
+  minH: 40
+  minLight: 0
+  minSaturation: 0
+  offset: -0.4
+  size: 1.2
   tManager: {fileID: 1171544327}
   trackingEnabled: 1

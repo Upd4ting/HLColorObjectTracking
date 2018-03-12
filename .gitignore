@@ -5,6 +5,8 @@
 /UnityProject/[Bb]uilds/
 /UnityProject/App/**
 /UnityProject/Assets/AssetStoreTools*
+/UnityProject/Assets/OpenCVForUnity/
+/UnityProject/Assets/OpenCVForUnity.meta
 
 # Visual Studio 2015 cache directory
 /UnityProject/.vs/
