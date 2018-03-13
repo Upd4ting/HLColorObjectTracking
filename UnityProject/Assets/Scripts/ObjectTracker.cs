@@ -16,7 +16,7 @@ public class ObjectTracker : MonoBehaviour {
     [Tooltip("The offset from the camera for the origin point")] [SerializeField]
     private float offset;
 
-    [Tooltip("Size of the stick")] [SerializeField]
+    [Tooltip("Size of the object")] [SerializeField]
     private float size;
 
     [Tooltip("The Tracker manager to use")] [SerializeField]
@@ -25,28 +25,31 @@ public class ObjectTracker : MonoBehaviour {
     [Tooltip("Tracking enabled or not")] [SerializeField]
     private bool trackingEnabled;
 
+    public int MaxH => maxH;
+
+    public int MinH => minH;
+
+    public int MinLight => minLight;
+
+    public int MinSaturation => minSaturation;
+
+    public float Offset => offset;
+
     public GameObject Sphere { get; private set; }
-
-    public int MaxH { get { return maxH; } set { maxH = value; } }
-
-    public int MinH { get { return minH; } set { minH = value; } }
-
-    public int MinLight { get { return minLight; } set { minLight = value; } }
-
-    public int MinSaturation { get { return minSaturation; } set { minSaturation = value; } }
 
     private void Start() {
         if (trackingEnabled) {
             tManager.registerTracker(this);
 
-            Sphere = new GameObject();
+            Sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
-            SphereCollider collider = Sphere.AddComponent<SphereCollider>();
-            Sphere.transform.position = Camera.main.transform.position + new Vector3(0, offset, 0);
-            collider.radius             = size;
-            collider.isTrigger          = true;
-            collider.enabled            = false;
-            Sphere.layer = LayerMask.NameToLayer("Tracker");
+            MeshRenderer ren = Sphere.GetComponent<MeshRenderer>();
+            ren.enabled = false;
+
+            SphereCollider collider = Sphere.GetComponent<SphereCollider>();
+            collider.radius    = size;
+            collider.isTrigger = true;
+            collider.enabled   = true;
         }
     }
 

@@ -323,7 +323,7 @@ GameObject:
   - component: {fileID: 1383785351}
   - component: {fileID: 1383785350}
   - component: {fileID: 1383785354}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -390,7 +390,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1383785349}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.02, z: 0.31}
+  m_LocalPosition: {x: 0.018, y: -0.323, z: 0.895}
   m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_Children: []
   m_Father: {fileID: 0}
@@ -415,3 +415,5 @@ MonoBehaviour:
   size: 1.2
   tManager: {fileID: 1171544327}
   trackingEnabled: 1
+  debug: 1
+  material: {fileID: 2100000, guid: d698790d3facd3d4289a13fa1243030a, type: 2}

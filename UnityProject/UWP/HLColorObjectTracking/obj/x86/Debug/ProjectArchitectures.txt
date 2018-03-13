@@ -1,0 +1,1 @@
+D:\Documents\workspace-technifutur\ColorObjectTracking\UnityProject\UWP\HLColorObjectTracking\HLColorObjectTracking.csproj;x86

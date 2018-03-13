@@ -127,17 +127,21 @@ public class TrackerManager : MonoBehaviour {
                     Vector2 point  = new Vector2(x, y);
                     Vector3 dirRay = LocatableCameraUtils.PixelCoordToWorldCoord(_cameraToWorldMatrix, _projectionMatrix, _resolution, point);
 
-                    // Try to find exact point based on sphere
                     Application.InvokeOnAppThread(() => {
-                        ot.Sphere.GetComponent<SphereCollider>().enabled = true;
-                        Ray        ray = new Ray(Camera.main.transform.position, dirRay);
+                        ot.Sphere.transform.position = Camera.main.transform.position + new Vector3(0, ot.Offset, 0);
+                        SphereCollider collider = ot.Sphere.GetComponent<SphereCollider>();
+
+                        // We inverse the ray source and dir to make the sphere collider work
+                        Vector3 newPosRay = Camera.main.transform.position + dirRay * (collider.radius * 2);
+
+                        Ray        ray = new Ray(newPosRay, -dirRay);
                         RaycastHit hit;
-                        if (Physics.Raycast(ray, out hit, 50, LayerMask.NameToLayer("Tracker"))) {
+
+                        if (Physics.Raycast(ray, out hit, collider.radius * 3))
+                        {
                             Vector3 pos = hit.point;
                             ot.gameObject.transform.position = pos;
                         }
-
-                        ot.Sphere.GetComponent<SphereCollider>().enabled = false;
                     }, false);
                 }
             }
