@@ -1,39 +1,29 @@
 ﻿using UnityEngine;
 
 public class ObjectTracker : MonoBehaviour {
-    [Header("Tracker settings")] [Range(0, 180)] [Tooltip("The maximum H required (HSV color format)")] [SerializeField]
-    private int maxH;
+    [Header("Tracker settings")] [Range(0, 180)] [Tooltip("The maximum H required (HSV color format)")]
+    public int maxH;
 
-    [Range(0, 180)] [Tooltip("The minimum H required (HSV color format)")] [SerializeField]
-    private int minH;
+    [Range(0, 180)] [Tooltip("The minimum H required (HSV color format)")]
+    public int minH;
 
-    [Range(0, 255)] [Tooltip("The minimum H required (HSV color format)")] [SerializeField]
-    private int minLight;
+    [Range(0, 255)] [Tooltip("The minimum H required (HSV color format)")]
+    public int minLight;
 
-    [Range(0, 255)] [Tooltip("The minimum saturation required (HSV color format)")] [SerializeField]
-    private int minSaturation;
+    [Range(0, 255)] [Tooltip("The minimum saturation required (HSV color format)")]
+    public int minSaturation;
 
-    [Tooltip("The offset from the camera for the origin point")] [SerializeField]
-    private float offset;
+    [Tooltip("The offset from the camera for the origin point")]
+    public float offset;
 
-    [Tooltip("Size of the object")] [SerializeField]
-    private float size;
+    [Tooltip("Size of the object")]
+    public float size;
 
-    [Tooltip("The Tracker manager to use")] [SerializeField]
-    private TrackerManager tManager;
+    [Tooltip("The Tracker manager to use")]
+    public TrackerManager tManager;
 
-    [Tooltip("Tracking enabled or not")] [SerializeField]
-    private bool trackingEnabled;
-
-    public int MaxH => maxH;
-
-    public int MinH => minH;
-
-    public int MinLight => minLight;
-
-    public int MinSaturation => minSaturation;
-
-    public float Offset => offset;
+    [Tooltip("Tracking enabled or not")]
+    public bool trackingEnabled;
 
     public GameObject Sphere { get; private set; }
 

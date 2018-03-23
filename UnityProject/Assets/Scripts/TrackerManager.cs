@@ -128,7 +128,7 @@ public class TrackerManager : MonoBehaviour {
                     Vector3 dirRay = LocatableCameraUtils.PixelCoordToWorldCoord(_cameraToWorldMatrix, _projectionMatrix, _resolution, point);
 
                     Application.InvokeOnAppThread(() => {
-                        ot.Sphere.transform.position = Camera.main.transform.position + new Vector3(0, ot.Offset, 0);
+                        ot.Sphere.transform.position = Camera.main.transform.position + new Vector3(0, ot.offset, 0);
                         SphereCollider collider = ot.Sphere.GetComponent<SphereCollider>();
 
                         // We inverse the ray source and dir to make the sphere collider work
@@ -174,7 +174,7 @@ public class TrackerManager : MonoBehaviour {
         // Track objects
         foreach (ObjectTracker ot in _trackers) {
             Imgproc.cvtColor(frameBGR, HSV, Imgproc.COLOR_BGR2HSV);
-            Core.inRange(HSV, new Scalar(ot.MinH, ot.MinSaturation, ot.MinLight), new Scalar(ot.MaxH, 255, 255), threshold);
+            Core.inRange(HSV, new Scalar(ot.minH, ot.minSaturation, ot.minLight), new Scalar(ot.maxH, 255, 255), threshold);
             morphOps(threshold);
             trackFilteredObject(ot, threshold);
         }
