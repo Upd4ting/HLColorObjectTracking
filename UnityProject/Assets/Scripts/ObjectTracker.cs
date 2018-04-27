@@ -19,6 +19,9 @@ public class ObjectTracker : MonoBehaviour {
     [Tooltip("Size of the object")]
     public float size;
 
+    [Tooltip("Once this limit reached, the object will be disabled")]
+    public int maxNotFound;
+
     [Tooltip("The Tracker manager to use")]
     public TrackerManager tManager;
 
@@ -26,6 +29,8 @@ public class ObjectTracker : MonoBehaviour {
     public bool trackingEnabled;
 
     public GameObject Sphere { get; private set; }
+
+    public int CountNotFound { get; set; }
 
     private void Start() {
         if (trackingEnabled) {

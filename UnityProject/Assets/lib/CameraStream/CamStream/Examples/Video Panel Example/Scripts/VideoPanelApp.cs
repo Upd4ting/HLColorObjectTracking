@@ -76,7 +76,7 @@ public class VideoPanelApp : MonoBehaviour
 
         UnityEngine.WSA.Application.InvokeOnAppThread(() => { _videoPanelUI.SetResolution(_resolution.width, _resolution.height); }, false);
 
-        videoCapture.StartVideoModeAsync(cameraParams, OnVideoModeStarted);
+        videoCapture.StartVideoModeAsync(false, cameraParams, OnVideoModeStarted);
     }
 
     void OnVideoModeStarted(VideoCaptureResult result)

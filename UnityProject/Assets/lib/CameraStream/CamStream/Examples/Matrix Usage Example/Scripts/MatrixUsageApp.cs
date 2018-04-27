@@ -75,7 +75,7 @@ public class MatrixUsageApp : MonoBehaviour
 
         UnityEngine.WSA.Application.InvokeOnAppThread(() => { _videoTexture = new Texture2D(_resolution.width, _resolution.height, TextureFormat.BGRA32, false); }, false);
 
-        videoCapture.StartVideoModeAsync(cameraParams, OnVideoModeStarted);
+        videoCapture.StartVideoModeAsync(false, cameraParams, OnVideoModeStarted);
     }
 
     void OnVideoModeStarted(VideoCaptureResult result)

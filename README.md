@@ -3,7 +3,7 @@ Hololens library to track object by unique color.
 
 This is using these library/plugin:
 
--	https://github.com/VulcanTechnologies/HoloLensCameraStream
+-	https://github.com/Upd4ting/HoloLensCameraStream
 -	https://github.com/Upd4ting/HololensTemplate
 -	https://github.com/EnoxSoftware/OpenCVForUnity
 

@@ -11,8 +11,10 @@ using UnityEngine;
 public class CameraStreamHelper : MonoBehaviour
 {
     event OnVideoCaptureResourceCreatedCallback VideoCaptureCreated;
+    event OnVideoCaptureResourceCreatedCallback VideoCaptureDepthCreated;
 
     static VideoCapture videoCapture;
+    static VideoCapture videoCaptureDepth;
 
     static CameraStreamHelper instance;
     public static CameraStreamHelper Instance
@@ -45,7 +47,23 @@ public class CameraStreamHelper : MonoBehaviour
         }
     }
 
-    public HoloLensCameraStream.Resolution GetHighestResolution()
+    public void GetVideoCaptureDepthAsync(OnVideoCaptureResourceCreatedCallback onVideoCaptureAvailable) {
+        if (onVideoCaptureAvailable == null)
+        {
+            Debug.LogError("You must supply the onVideoCaptureAvailable delegate.");
+        }
+
+        if (videoCaptureDepth == null)
+        {
+            VideoCaptureDepthCreated += onVideoCaptureAvailable;
+        }
+        else
+        {
+            onVideoCaptureAvailable(videoCaptureDepth);
+        }
+    }
+
+    public HoloLensCameraStream.Resolution GetHighestResolution(VideoCapture videoCapture)
     {
         if (videoCapture == null)
         {
@@ -54,7 +72,7 @@ public class CameraStreamHelper : MonoBehaviour
         return videoCapture.GetSupportedResolutions().OrderByDescending((r) => r.width * r.height).FirstOrDefault();
     }
 
-    public HoloLensCameraStream.Resolution GetLowestResolution()
+    public HoloLensCameraStream.Resolution GetLowestResolution(VideoCapture videoCapture)
     {
         if (videoCapture == null)
         {
@@ -63,7 +81,7 @@ public class CameraStreamHelper : MonoBehaviour
         return videoCapture.GetSupportedResolutions().OrderBy((r) => r.width * r.height).FirstOrDefault();
     }
 
-    public float GetHighestFrameRate(HoloLensCameraStream.Resolution forResolution)
+    public float GetHighestFrameRate(VideoCapture videoCapture, HoloLensCameraStream.Resolution forResolution)
     {
         if (videoCapture == null)
         {
@@ -72,7 +90,7 @@ public class CameraStreamHelper : MonoBehaviour
         return videoCapture.GetSupportedFrameRatesForResolution(forResolution).OrderByDescending(r => r).FirstOrDefault();
     }
 
-    public float GetLowestFrameRate(HoloLensCameraStream.Resolution forResolution)
+    public float GetLowestFrameRate(VideoCapture videoCapture, HoloLensCameraStream.Resolution forResolution)
     {
         if (videoCapture == null)
         {
@@ -90,7 +108,8 @@ public class CameraStreamHelper : MonoBehaviour
         }
 
         instance = this;
-        VideoCapture.CreateAync(OnVideoCaptureInstanceCreated);
+        VideoCapture.CreateAync(OnVideoCaptureInstanceCreated, new SourceKind[] {SourceKind.COLOR});
+        VideoCapture.CreateAsync(OnVideoCapturDepthInstanceCreated, new SourceKind[]{SourceKind.COLOR, SourceKind.DEPTH, SourceKind.INFRARED}, SourceKind.DEPTH);
     }
 
     private void OnDestroy()
@@ -113,6 +132,20 @@ public class CameraStreamHelper : MonoBehaviour
         if (VideoCaptureCreated != null)
         {
             VideoCaptureCreated(videoCapture);
+        }
+    }
+
+    private void OnVideoCapturDepthInstanceCreated(VideoCapture videoCapture) {
+        if (videoCapture == null)
+        {
+            Debug.LogError("Creating the VideoCapture object failed.");
+            return;
+        }
+
+        CameraStreamHelper.videoCaptureDepth = videoCapture;
+        if (VideoCaptureDepthCreated != null)
+        {
+            VideoCaptureDepthCreated(videoCapture);
         }
     }
 }
