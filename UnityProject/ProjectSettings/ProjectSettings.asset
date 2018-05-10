@@ -228,6 +228,8 @@ PlayerSettings:
   appleDeveloperTeamID: 
   iOSManualSigningProvisioningProfileID: 
   tvOSManualSigningProvisioningProfileID: 
+  iOSManualSigningProvisioningProfileType: 0
+  tvOSManualSigningProvisioningProfileType: 0
   appleEnableAutomaticSigning: 0
   iOSRequireARKit: 0
   appleEnableProMotion: 0
@@ -532,7 +534,7 @@ PlayerSettings:
   webGLCompressionFormat: 1
   webGLLinkerTarget: 0
   scriptingDefineSymbols:
-    14: WINRT
+    14: 
   platformArchitecture: {}
   scriptingBackend:
     Metro: 2
@@ -553,7 +555,7 @@ PlayerSettings:
   metroCertificateNotAfter: 008ec71124c6d401
   metroApplicationDescription: HLColorObjectTracking
   wsaImages: {}
-  metroTileShortName: 
+  metroTileShortName: HLColorObjectTracking
   metroCommandLineArgsFile: 
   metroTileShowName: 0
   metroMediumTileShowName: 0

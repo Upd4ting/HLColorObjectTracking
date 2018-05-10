@@ -60,8 +60,8 @@ public class VideoPanelApp : MonoBehaviour
         //Request the spatial coordinate ptr if you want fetch the camera and set it if you need to 
         CameraStreamHelper.Instance.SetNativeISpatialCoordinateSystemPtr(_spatialCoordinateSystemPtr);
 
-        _resolution = CameraStreamHelper.Instance.GetLowestResolution();
-        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
+        _resolution = CameraStreamHelper.Instance.GetLowestResolution(videoCapture);
+        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(videoCapture, _resolution);
         videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 
         //You don't need to set all of these params.

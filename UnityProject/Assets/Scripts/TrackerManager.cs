@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using System.Linq;
 using HoloLensCameraStream;
 
 using OpenCVForUnity;
@@ -13,22 +13,6 @@ using Application = UnityEngine.WSA.Application;
 using Resolution = HoloLensCameraStream.Resolution;
 using VideoCapture = HoloLensCameraStream.VideoCapture;
 
-#if !UNITY_EDITOR
-using System.Linq;
-using Windows.UI.Core;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using Windows.Media.Capture;
-using Windows.Media.Capture.Frames;
-using Windows.Media.MediaProperties;
-using Windows.Media.Effects;
-using Windows.Perception.Spatial;
-#endif
-
 public class TrackerManager : MonoBehaviour {
     private readonly List<ObjectTracker> _trackers = new List<ObjectTracker>();
 
@@ -37,16 +21,23 @@ public class TrackerManager : MonoBehaviour {
     private byte[]    _latestImageBytes;
     private Matrix4x4 _projectionMatrix = Matrix4x4.zero;
 
-    // Variable for depth
-    private byte[] _latestDepthImageBytes;
-    private double scaleDepth;
+    // Variable for Depth
+    private ushort[] _latestDepthBytes;
+    private double depthScale;
+    private uint minScale;
+    private uint maxScale;
 
-    private Resolution _resolution;
+    private Resolution _resolutionColor;
+    private Resolution _resolutionDepth;
 
     private IntPtr       _spatialCoordinateSystemPtr;
     private VideoCapture _videoCapture;
     private VideoCapture _videoCaptureDepth;
     private CameraParameters _cameraParams;
+
+    private int lastPosX = -1;
+    private int lastPosY;
+    private int lastP;
 
     public void registerTracker(ObjectTracker tracker) {
         _trackers.Add(tracker);
@@ -58,15 +49,6 @@ public class TrackerManager : MonoBehaviour {
 
     private void Start() {
         _spatialCoordinateSystemPtr = WorldManager.GetNativeISpatialCoordinateSystemPtr();
-
-#if !UNITY_EDITOR
-        SpatialCoordinateSystem test;
-
-        unsafe 
-        {
-            test = (SpatialCoordinateSystem) Marshal.GetObjectForIUnknown(_spatialCoordinateSystemPtr);
-        }
-#endif
 
         CameraStreamHelper.Instance.GetVideoCaptureAsync(OnVideoCaptureCreated);
         CameraStreamHelper.Instance.GetVideoCaptureDepthAsync(OnVideoCaptureDepthCreated);
@@ -80,10 +62,12 @@ public class TrackerManager : MonoBehaviour {
         Destroy();
     }
 
-    private async void Destroy() {
+    private void Destroy() {
         if (_videoCapture != null) {
             _videoCapture.FrameSampleAcquired -= OnFrameSampleAcquired;
+            _videoCaptureDepth.FrameSampleAcquired -= OnFrameSampleDepthAcquired;
             _videoCapture.Dispose();
+            _videoCaptureDepth.Dispose();
         }
     }
 
@@ -98,14 +82,14 @@ public class TrackerManager : MonoBehaviour {
         //Request the spatial coordinate ptr if you want fetch the camera and set it if you need to 
         CameraStreamHelper.Instance.SetNativeISpatialCoordinateSystemPtr(_spatialCoordinateSystemPtr);
 
-        _resolution = CameraStreamHelper.Instance.GetLowestResolution(videoCapture);
-        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(videoCapture, _resolution);
+        _resolutionColor = CameraStreamHelper.Instance.GetLowestResolution(videoCapture);
+        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(videoCapture, _resolutionColor);
 
         videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 
         CameraParameters cameraParams = new CameraParameters();
-        cameraParams.cameraResolutionHeight = _resolution.height;
-        cameraParams.cameraResolutionWidth  = _resolution.width;
+        cameraParams.cameraResolutionHeight = _resolutionColor.height;
+        cameraParams.cameraResolutionWidth  = _resolutionColor.width;
         cameraParams.frameRate              = Mathf.RoundToInt(frameRate);
         cameraParams.pixelFormat            = CapturePixelFormat.BGRA32;
         cameraParams.rotateImage180Degrees  = false;
@@ -126,14 +110,14 @@ public class TrackerManager : MonoBehaviour {
 
         _videoCaptureDepth = videoCapture;
 
-        _resolution = CameraStreamHelper.Instance.GetLowestResolution(videoCapture);
-        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(videoCapture, _resolution);
+        _resolutionDepth = CameraStreamHelper.Instance.GetLowestResolution(videoCapture);
+        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(videoCapture, _resolutionDepth);
 
-        videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
+        videoCapture.FrameSampleAcquired += OnFrameSampleDepthAcquired;
 
         CameraParameters cameraParams = new CameraParameters();
-        cameraParams.cameraResolutionHeight = _resolution.height;
-        cameraParams.cameraResolutionWidth  = _resolution.width;
+        cameraParams.cameraResolutionHeight = _resolutionDepth.height;
+        cameraParams.cameraResolutionWidth  = _resolutionDepth.width;
         cameraParams.frameRate              = Mathf.RoundToInt(frameRate);
         cameraParams.pixelFormat            = CapturePixelFormat.BGRA32;
         cameraParams.rotateImage180Degrees  = false;
@@ -189,41 +173,41 @@ public class TrackerManager : MonoBehaviour {
                     int y = (int) (moment.get_m01() / area);
 
                     Vector2 point  = new Vector2(x, y);
-                    Vector3 dirRay = LocatableCameraUtils.PixelCoordToWorldCoord(_cameraToWorldMatrix, _projectionMatrix, _resolution, point);
+                    Vector3 dirRay = LocatableCameraUtils.PixelCoordToWorldCoord(_cameraToWorldMatrix, _projectionMatrix, _resolutionColor, point);
 
-                    ot.gameObject.GetComponent<Renderer>().enabled = true;
+                    // Getting depth
+                    int x1 = x * _resolutionDepth.width / _resolutionColor.width;
+                    int y1 = y * _resolutionDepth.height / _resolutionColor.height;
+                    int p = x1 + y1 * _resolutionDepth.width;
 
-                    // Sensor test
-
-
-
-                    // Sensor test
-
-                    ot.Sphere.transform.position = Camera.main.transform.position + new Vector3(0, ot.offset, 0);
-                    SphereCollider collider = ot.Sphere.GetComponent<SphereCollider>();
-
-                    // We inverse the ray source and dir to make the sphere collider work
-                    Vector3 newPosRay = Camera.main.transform.position + dirRay * (collider.radius * 2);
-
-                    Ray        ray = new Ray(newPosRay, -dirRay);
-                    RaycastHit hit;
-
-                    if (Physics.Raycast(ray, out hit, collider.radius * 3))
-                    {
-                        Vector3 pos = hit.point;
-
-                        Vector3 sub  = pos - ot.gameObject.transform.position;
-                        float   dist = sub.magnitude;
-
-                        if (dist >= 0.01f)
-                        {
-                            StartCoroutine(MoveOverSeconds(ot.gameObject, pos, 0.05f));
-                        }
+                    if (lastPosX != -1) {
+                        if (x < lastPosX + 10 && x > lastPosX - 10 && y < lastPosY + 10 && y > lastPosY - 10)
+                            p = lastP;
                     }
 
-                    ot.CountNotFound = 0;
-                    find = true;
+                    lastPosX = x;
+                    lastPosY = y;
+                    lastP = p;
 
+                    var depth = _latestDepthBytes[p] * depthScale;
+
+                    Debug.Log("At " + x + " " + y);
+                    Debug.Log("Depth: " + depth);
+
+                    Vector3 pos = Camera.main.transform.position + dirRay.normalized * (float)depth;
+
+                    Vector3 sub = pos - ot.gameObject.transform.position;
+                    float dist = sub.magnitude;
+
+                    if (dist < 0.01f)
+                        continue;
+
+                    Debug.Log("Found");
+
+                    StartCoroutine(MoveOverSeconds(ot.gameObject, pos, 0.05f));
+                    ot.CountNotFound = 0;
+                    ot.gameObject.GetComponent<Renderer>().enabled = true;
+                    find = true;
                     break;
                 }
             }
@@ -236,6 +220,7 @@ public class TrackerManager : MonoBehaviour {
             {
                 ot.CountNotFound                               = 0;
                 ot.gameObject.GetComponent<Renderer>().enabled = false;
+                Debug.Log("Disabled");
             }
         }
     }
@@ -252,17 +237,19 @@ public class TrackerManager : MonoBehaviour {
         objectToMove.transform.position = end;
     }
 
+    private void OnFrameSampleDepthAcquired(VideoCaptureSample sample) {
+        byte[] aBytes = new byte[sample.dataLength];
+        sample.CopyRawImageDataIntoBuffer(aBytes);
+
+        _latestDepthBytes = aBytes.Select(b => (ushort)b).ToArray();
+#if !UNITY_EDITOR && UNITY_WSA
+        depthScale = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.DepthFormat.DepthScaleInMeters;
+        minScale   = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.MinReliableDepth;
+        maxScale   = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.MaxReliableDepth;
+#endif
+    }
+
     private void OnFrameSampleAcquired(VideoCaptureSample sample) {
-        // First check if that's a depth buffer that has been retrieved
-        if (sample.isDepth()) {
-            Debug.Log("Received depth");
-            HandleDepthFrame(sample);
-            sample.Dispose();
-            return;
-        }
-
-        Debug.Log("Not depth");
-
         if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength) _latestImageBytes = new byte[sample.dataLength];
         sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
 
@@ -272,22 +259,22 @@ public class TrackerManager : MonoBehaviour {
             if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false)
             {
                 Debug.Log("Failed to get camera to world or projection matrix");
-                sample.Dispose();
                 return;
             }
 
-            Debug.Log("Success");
-
             _cameraToWorldMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(cameraToWorldMatrixAsFloat);
             _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
+
+            Debug.Log("Success");
         }
 
-        sample.Dispose();
+        if (_latestDepthBytes == null)
+            return;
 
         Application.InvokeOnAppThread(() => {
-            Mat frameBGRA = new Mat(_resolution.height, _resolution.width, CvType.CV_8UC4);
+            Mat frameBGRA = new Mat(_resolutionColor.height, _resolutionColor.width, CvType.CV_8UC4);
             frameBGRA.put(0, 0, _latestImageBytes);
-            Mat frameBGR = new Mat(_resolution.height, _resolution.width, CvType.CV_8UC3);
+            Mat frameBGR = new Mat(_resolutionColor.height, _resolutionColor.width, CvType.CV_8UC3);
             Imgproc.cvtColor(frameBGRA, frameBGR, Imgproc.COLOR_BGRA2BGR);
 
             Mat HSV       = new Mat();
@@ -302,14 +289,5 @@ public class TrackerManager : MonoBehaviour {
                 trackFilteredObject(ot, threshold);
             }
         }, false);
-    }
-
-    private void HandleDepthFrame(VideoCaptureSample sample) {
-        if (_latestDepthImageBytes == null || _latestDepthImageBytes.Length < sample.dataLength) _latestDepthImageBytes = new byte[sample.dataLength];
-            sample.CopyRawImageDataIntoBuffer(_latestDepthImageBytes);
-
-        scaleDepth = sample.getDepthScale();
-
-        Debug.Log("Scale depth: " + scaleDepth);
     }
 }

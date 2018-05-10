@@ -96,8 +96,8 @@ public class ProjectionExample : MonoBehaviour {
         //Request the spatial coordinate ptr if you want fetch the camera and set it if you need to 
         CameraStreamHelper.Instance.SetNativeISpatialCoordinateSystemPtr(_spatialCoordinateSystemPtr);
 
-        _resolution = CameraStreamHelper.Instance.GetLowestResolution();
-        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(_resolution);
+        _resolution = CameraStreamHelper.Instance.GetLowestResolution(v);
+        float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(v, _resolution);
 
         _videoCapture.FrameSampleAcquired += OnFrameSampleAcquired;
 

@@ -11,7 +11,7 @@ using UnityEngine;
 public class CameraStreamHelper : MonoBehaviour
 {
     event OnVideoCaptureResourceCreatedCallback VideoCaptureCreated;
-    event OnVideoCaptureResourceCreatedCallback VideoCaptureDepthCreated;
+    private event OnVideoCaptureResourceCreatedCallback VideoCaptureDepthCreated;
 
     static VideoCapture videoCapture;
     static VideoCapture videoCaptureDepth;
@@ -47,7 +47,8 @@ public class CameraStreamHelper : MonoBehaviour
         }
     }
 
-    public void GetVideoCaptureDepthAsync(OnVideoCaptureResourceCreatedCallback onVideoCaptureAvailable) {
+    public void GetVideoCaptureDepthAsync(OnVideoCaptureResourceCreatedCallback onVideoCaptureAvailable)
+    {
         if (onVideoCaptureAvailable == null)
         {
             Debug.LogError("You must supply the onVideoCaptureAvailable delegate.");
@@ -63,40 +64,40 @@ public class CameraStreamHelper : MonoBehaviour
         }
     }
 
-    public HoloLensCameraStream.Resolution GetHighestResolution(VideoCapture videoCapture)
+    public HoloLensCameraStream.Resolution GetHighestResolution(VideoCapture capture)
     {
-        if (videoCapture == null)
+        if (capture == null)
         {
             throw new Exception("Please call this method after a VideoCapture instance has been created.");
         }
-        return videoCapture.GetSupportedResolutions().OrderByDescending((r) => r.width * r.height).FirstOrDefault();
+        return capture.GetSupportedResolutions().OrderByDescending((r) => r.width * r.height).FirstOrDefault();
     }
 
-    public HoloLensCameraStream.Resolution GetLowestResolution(VideoCapture videoCapture)
+    public HoloLensCameraStream.Resolution GetLowestResolution(VideoCapture capture)
     {
-        if (videoCapture == null)
+        if (capture == null)
         {
             throw new Exception("Please call this method after a VideoCapture instance has been created.");
         }
-        return videoCapture.GetSupportedResolutions().OrderBy((r) => r.width * r.height).FirstOrDefault();
+        return capture.GetSupportedResolutions().OrderBy((r) => r.width * r.height).FirstOrDefault();
     }
 
-    public float GetHighestFrameRate(VideoCapture videoCapture, HoloLensCameraStream.Resolution forResolution)
+    public float GetHighestFrameRate(VideoCapture capture, HoloLensCameraStream.Resolution forResolution)
     {
-        if (videoCapture == null)
+        if (capture == null)
         {
             throw new Exception("Please call this method after a VideoCapture instance has been created.");
         }
-        return videoCapture.GetSupportedFrameRatesForResolution(forResolution).OrderByDescending(r => r).FirstOrDefault();
+        return capture.GetSupportedFrameRatesForResolution(forResolution).OrderByDescending(r => r).FirstOrDefault();
     }
 
-    public float GetLowestFrameRate(VideoCapture videoCapture, HoloLensCameraStream.Resolution forResolution)
+    public float GetLowestFrameRate(VideoCapture capture, HoloLensCameraStream.Resolution forResolution)
     {
-        if (videoCapture == null)
+        if (capture == null)
         {
             throw new Exception("Please call this method after a VideoCapture instance has been created.");
         }
-        return videoCapture.GetSupportedFrameRatesForResolution(forResolution).OrderBy(r => r).FirstOrDefault();
+        return capture.GetSupportedFrameRatesForResolution(forResolution).OrderBy(r => r).FirstOrDefault();
     }
 
     private void Awake()
@@ -108,8 +109,8 @@ public class CameraStreamHelper : MonoBehaviour
         }
 
         instance = this;
-        VideoCapture.CreateAync(OnVideoCaptureInstanceCreated, new SourceKind[] {SourceKind.COLOR});
-        VideoCapture.CreateAsync(OnVideoCapturDepthInstanceCreated, new SourceKind[]{SourceKind.COLOR, SourceKind.DEPTH, SourceKind.INFRARED}, SourceKind.DEPTH);
+        VideoCapture.CreateAsync(OnVideoCaptureInstanceCreated, new SourceKind[] {SourceKind.COLOR});
+        VideoCapture.CreateAsync(OnVideoCaptureDepthInstanceCreated, new SourceKind[] {SourceKind.COLOR, SourceKind.DEPTH, SourceKind.INFRARED}, SourceKind.DEPTH);
     }
 
     private void OnDestroy()
@@ -135,15 +136,16 @@ public class CameraStreamHelper : MonoBehaviour
         }
     }
 
-    private void OnVideoCapturDepthInstanceCreated(VideoCapture videoCapture) {
+    private void OnVideoCaptureDepthInstanceCreated(VideoCapture videoCapture)
+    {
         if (videoCapture == null)
         {
             Debug.LogError("Creating the VideoCapture object failed.");
             return;
         }
 
-        CameraStreamHelper.videoCaptureDepth = videoCapture;
-        if (VideoCaptureDepthCreated != null)
+        videoCaptureDepth = videoCapture;
+        if (VideoCaptureCreated != null)
         {
             VideoCaptureDepthCreated(videoCapture);
         }
