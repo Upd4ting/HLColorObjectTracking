@@ -298,6 +298,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a0cafd67fadb34d99d89f52f976b5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  minZoneSize: 100
 --- !u!4 &1171544328
 Transform:
   m_ObjectHideFlags: 0
@@ -391,7 +392,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1383785349}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.018, y: -0.323, z: 0.895}
+  m_LocalPosition: {x: 0.018, y: -0.1061, z: 0.74668}
   m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_Children: []
   m_Father: {fileID: 0}
@@ -412,8 +413,6 @@ MonoBehaviour:
   minH: 40
   minLight: 0
   minSaturation: 0
-  offset: -0.4
-  size: 1.2
   maxNotFound: 5
   tManager: {fileID: 1171544327}
   trackingEnabled: 1

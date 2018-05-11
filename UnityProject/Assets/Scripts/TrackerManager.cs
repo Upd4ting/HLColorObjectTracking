@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+
 using HoloLensCameraStream;
 
 using OpenCVForUnity;
@@ -12,9 +12,24 @@ using UnityEngine.XR.WSA;
 using Application = UnityEngine.WSA.Application;
 using Resolution = HoloLensCameraStream.Resolution;
 using VideoCapture = HoloLensCameraStream.VideoCapture;
+using System.Runtime.InteropServices;
+
+#if !UNITY_EDITOR && UNITY_WSA
+using Windows.Graphics.Imaging;
+#endif
+
+[ComImport]
+[Guid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+unsafe interface IMemoryBufferByteAccess
+{
+    void GetBuffer(out byte* buffer, out uint capacity);
+}
 
 public class TrackerManager : MonoBehaviour {
     private readonly List<ObjectTracker> _trackers = new List<ObjectTracker>();
+
+    [SerializeField] [Tooltip("The minimum size of the detected area")] private int minZoneSize = 100;
 
     // Variable for Camera
     private Matrix4x4 _cameraToWorldMatrix = Matrix4x4.zero;
@@ -22,8 +37,10 @@ public class TrackerManager : MonoBehaviour {
     private Matrix4x4 _projectionMatrix = Matrix4x4.zero;
 
     // Variable for Depth
-    private ushort[] _latestDepthBytes;
-    private double depthScale;
+#if !UNITY_EDITOR && UNITY_WSA
+    private SoftwareBitmap _depthBitmap;
+#endif
+    private double depthScale  = -1;
     private uint minScale;
     private uint maxScale;
 
@@ -34,10 +51,6 @@ public class TrackerManager : MonoBehaviour {
     private VideoCapture _videoCapture;
     private VideoCapture _videoCaptureDepth;
     private CameraParameters _cameraParams;
-
-    private int lastPosX = -1;
-    private int lastPosY;
-    private int lastP;
 
     public void registerTracker(ObjectTracker tracker) {
         _trackers.Add(tracker);
@@ -111,6 +124,9 @@ public class TrackerManager : MonoBehaviour {
         _videoCaptureDepth = videoCapture;
 
         _resolutionDepth = CameraStreamHelper.Instance.GetLowestResolution(videoCapture);
+
+        Debug.Log(_resolutionDepth.width + "x" + _resolutionDepth.height);
+
         float frameRate = CameraStreamHelper.Instance.GetHighestFrameRate(videoCapture, _resolutionDepth);
 
         videoCapture.FrameSampleAcquired += OnFrameSampleDepthAcquired;
@@ -152,7 +168,7 @@ public class TrackerManager : MonoBehaviour {
         Imgproc.dilate(thresh, thresh, dilateElement);
     }
 
-    private void trackFilteredObject(ObjectTracker ot, Mat threshold) {
+    private unsafe void trackFilteredObject(ObjectTracker ot, Mat threshold) {
         Mat temp = new Mat();
         threshold.copyTo(temp);
 
@@ -168,61 +184,78 @@ public class TrackerManager : MonoBehaviour {
                 Moments moment = Imgproc.moments(contours[index]);
                 double  area   = moment.m00;
 
-                if (area > 10 * 10) {
+                if (area > minZoneSize) { 
                     int x = (int) (moment.get_m10() / area);
                     int y = (int) (moment.get_m01() / area);
 
                     Vector2 point  = new Vector2(x, y);
                     Vector3 dirRay = LocatableCameraUtils.PixelCoordToWorldCoord(_cameraToWorldMatrix, _projectionMatrix, _resolutionColor, point);
 
-                    // Getting depth
-                    int x1 = x * _resolutionDepth.width / _resolutionColor.width;
-                    int y1 = y * _resolutionDepth.height / _resolutionColor.height;
-                    int p = x1 + y1 * _resolutionDepth.width;
+                    // Getting depth (32bit depth?)
+                    float w = _resolutionDepth.width / _resolutionColor.width;
+                    float h = _resolutionDepth.height / _resolutionColor.height;
 
-                    if (lastPosX != -1) {
-                        if (x < lastPosX + 10 && x > lastPosX - 10 && y < lastPosY + 10 && y > lastPosY - 10)
-                            p = lastP;
+                    int nx = (int) (x * w);
+                    int ny = (int) (y * h);
+
+                    double depth = -1;
+
+#if !UNITY_EDITOR && UNITY_WSA
+                    lock (_depthBitmap) {
+                        using (var input = _depthBitmap.LockBuffer(BitmapBufferAccessMode.Read)) {
+                            int inputStride = input.GetPlaneDescription(0).Stride;
+                            int pixelWidth  = _depthBitmap.PixelWidth;
+                            int pixelHeight = _depthBitmap.PixelHeight;
+
+                            using (var inputReference = input.CreateReference()) {
+                                byte* inputBytes;
+                                uint  inputCapacity;
+                                ((IMemoryBufferByteAccess)inputReference).GetBuffer(out inputBytes, out inputCapacity);
+
+                                byte* inputRowBytes = inputBytes + ny * inputStride;
+                                ushort* inputRow = (ushort*)inputRowBytes;
+
+                                depth = inputRow[nx] * depthScale;
+                            }
+                        }
                     }
+#endif
 
-                    lastPosX = x;
-                    lastPosY = y;
-                    lastP = p;
+                    Debug.Log("Depth: " + (float)depth);
 
-                    var depth = _latestDepthBytes[p] * depthScale;
+                    Application.InvokeOnAppThread(() => {
+                        Vector3 pos = Camera.main.transform.position + dirRay.normalized * (float)depth;
 
-                    Debug.Log("At " + x + " " + y);
-                    Debug.Log("Depth: " + depth);
+                        Vector3 sub  = pos - ot.gameObject.transform.position;
+                        float   dist = sub.magnitude;
 
-                    Vector3 pos = Camera.main.transform.position + dirRay.normalized * (float)depth;
+                        if (dist < 0.01f)
+                            return;
 
-                    Vector3 sub = pos - ot.gameObject.transform.position;
-                    float dist = sub.magnitude;
+                        ot.gameObject.transform.position               = pos;
+                        ot.CountNotFound                               = 0;
+                        ot.gameObject.GetComponent<Renderer>().enabled = true;
+                        find                                           = true;
+                    }, true);
 
-                    if (dist < 0.01f)
-                        continue;
-
-                    Debug.Log("Found");
-
-                    StartCoroutine(MoveOverSeconds(ot.gameObject, pos, 0.05f));
-                    ot.CountNotFound = 0;
-                    ot.gameObject.GetComponent<Renderer>().enabled = true;
-                    find = true;
-                    break;
+                    if (find)
+                        break;
                 }
             }
         }
 
-        if (!find && ot.gameObject.GetComponent<Renderer>().enabled)
-        {
-            ot.CountNotFound++;
-            if (ot.CountNotFound > ot.maxNotFound)
+        Application.InvokeOnAppThread(() => {
+            if (!find && ot.gameObject.GetComponent<Renderer>().enabled)
             {
-                ot.CountNotFound                               = 0;
-                ot.gameObject.GetComponent<Renderer>().enabled = false;
-                Debug.Log("Disabled");
+                ot.CountNotFound++;
+                if (ot.CountNotFound > ot.maxNotFound)
+                {
+                    ot.CountNotFound                               = 0;
+                    //ot.gameObject.GetComponent<Renderer>().enabled = false;
+                    Debug.Log("Disabled");
+                }
             }
-        }
+        }, false);
     }
 
     private IEnumerator MoveOverSeconds(GameObject objectToMove, Vector3 end, float seconds) {
@@ -238,14 +271,23 @@ public class TrackerManager : MonoBehaviour {
     }
 
     private void OnFrameSampleDepthAcquired(VideoCaptureSample sample) {
-        byte[] aBytes = new byte[sample.dataLength];
-        sample.CopyRawImageDataIntoBuffer(aBytes);
-
-        _latestDepthBytes = aBytes.Select(b => (ushort)b).ToArray();
 #if !UNITY_EDITOR && UNITY_WSA
-        depthScale = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.DepthFormat.DepthScaleInMeters;
-        minScale   = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.MinReliableDepth;
-        maxScale   = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.MaxReliableDepth;
+        if (_depthBitmap == null)
+            _depthBitmap = sample.bitmap;
+        else {
+            lock (_depthBitmap)
+                _depthBitmap = sample.bitmap;
+        }
+
+        if (depthScale == -1) {
+            depthScale = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.DepthFormat.DepthScaleInMeters;
+            minScale   = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.MinReliableDepth;
+            maxScale   = sample.FrameReference.VideoMediaFrame.DepthMediaFrame.MaxReliableDepth;
+
+            Debug.Log("Min depth: " + minScale);
+            Debug.Log("Max depth: " + maxScale);
+            Debug.Log("Format received: " + sample.FrameReference.VideoMediaFrame.SoftwareBitmap.BitmapPixelFormat);
+        }
 #endif
     }
 
@@ -253,41 +295,36 @@ public class TrackerManager : MonoBehaviour {
         if (_latestImageBytes == null || _latestImageBytes.Length < sample.dataLength) _latestImageBytes = new byte[sample.dataLength];
         sample.CopyRawImageDataIntoBuffer(_latestImageBytes);
 
-        if (_cameraToWorldMatrix == Matrix4x4.zero || _projectionMatrix == Matrix4x4.zero) {
-            float[] cameraToWorldMatrixAsFloat;
-            float[] projectionMatrixAsFloat;
-            if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false)
-            {
-                Debug.Log("Failed to get camera to world or projection matrix");
-                return;
-            }
-
-            _cameraToWorldMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(cameraToWorldMatrixAsFloat);
-            _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
-
-            Debug.Log("Success");
+        float[] cameraToWorldMatrixAsFloat;
+        float[] projectionMatrixAsFloat;
+        if (sample.TryGetCameraToWorldMatrix(out cameraToWorldMatrixAsFloat) == false || sample.TryGetProjectionMatrix(out projectionMatrixAsFloat) == false)
+        {
+            return;
         }
 
-        if (_latestDepthBytes == null)
+        _cameraToWorldMatrix = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(cameraToWorldMatrixAsFloat);
+        _projectionMatrix    = LocatableCameraUtils.ConvertFloatArrayToMatrix4x4(projectionMatrixAsFloat);
+
+#if !UNITY_EDITOR && UNITY_WSA
+        if (_depthBitmap == null)
             return;
+#endif
 
-        Application.InvokeOnAppThread(() => {
-            Mat frameBGRA = new Mat(_resolutionColor.height, _resolutionColor.width, CvType.CV_8UC4);
-            frameBGRA.put(0, 0, _latestImageBytes);
-            Mat frameBGR = new Mat(_resolutionColor.height, _resolutionColor.width, CvType.CV_8UC3);
-            Imgproc.cvtColor(frameBGRA, frameBGR, Imgproc.COLOR_BGRA2BGR);
+        Mat frameBGRA = new Mat(_resolutionColor.height, _resolutionColor.width, CvType.CV_8UC4);
+        frameBGRA.put(0, 0, _latestImageBytes);
+        Mat frameBGR = new Mat(_resolutionColor.height, _resolutionColor.width, CvType.CV_8UC3);
+        Imgproc.cvtColor(frameBGRA, frameBGR, Imgproc.COLOR_BGRA2BGR);
 
-            Mat HSV       = new Mat();
-            Mat threshold = new Mat();
+        Mat HSV       = new Mat();
+        Mat threshold = new Mat();
 
-            // Track objects
-            foreach (ObjectTracker ot in _trackers)
-            {
-                Imgproc.cvtColor(frameBGR, HSV, Imgproc.COLOR_BGR2HSV);
-                Core.inRange(HSV, new Scalar(ot.minH, ot.minSaturation, ot.minLight), new Scalar(ot.maxH, 255, 255), threshold);
-                morphOps(threshold);
-                trackFilteredObject(ot, threshold);
-            }
-        }, false);
+        // Track objects
+        foreach (ObjectTracker ot in _trackers)
+        {
+            Imgproc.cvtColor(frameBGR, HSV, Imgproc.COLOR_BGR2HSV);
+            Core.inRange(HSV, new Scalar(ot.minH, ot.minSaturation, ot.minLight), new Scalar(ot.maxH, 255, 255), threshold);
+            morphOps(threshold);
+            trackFilteredObject(ot, threshold);
+        }
     }
 }
