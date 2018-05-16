@@ -1,7 +1,7 @@
 # HLColorObjectTracking
-Hololens library to track object by unique color or LED.
+Hololens library to track object by unique color.
 
-The LED tracking haven't been finished yet. (I don't have anymore access to an Hololens so if someone want to implement tracking he can do a pull request)
+That's not all working yet, once it worked smoothly that will be pushed on the *master* branch.
 
 This is using these library/plugin:
 
@@ -15,15 +15,10 @@ You can contribute by forking and doing pull request
 
 # Concept 
 
-Track in real time an object with unique color or LED.
+Track in real time an object with unique color.
 This is using OpenCVForUnity for the computer vision algorithm.
 
-Currently, the Hololens doesn't provide us access to the raw depth data.
-Because of that this library can only track object that we have in hand and that we know the size. 
-The origin point of this object must also be static (stick for example).
-
-Microsoft is talking about an update to give us access to the information we need.
-If this update is released, I will update this library to be able to track any object.
+We track an objet of a kind of color and we use depth sensor and matrix to get a 3D position based on the camera.
 
 # Documentation
 
