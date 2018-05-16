@@ -25,6 +25,8 @@ The origin point of this object must also be static (stick for example).
 Microsoft is talking about an update to give us access to the information we need.
 If this update is released, I will update this library to be able to track any object.
 
+**EDIT:** Since april we got an insider update on the Hololens that allows use to catch raw data from the depth sensor. You can see a start of the implementation in the branch *useDepth* but that's not all working yet, feel free to help me finishing that as I got less time to finish this library
+
 # Documentation
 
 Coming soon...
